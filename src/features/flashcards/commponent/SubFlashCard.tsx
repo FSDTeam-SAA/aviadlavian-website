@@ -150,7 +150,7 @@ const SubFlashCard = ({
                     </p>
                     <Link
                       href={{
-                        pathname: `/flashcards/${subspecialtyTitle}/${item.id}`,
+                        pathname: `/flashcards/subspecialty/${item.id}`,
                         query: {
                           question: item.question,
                           subspecialty: subspecialtyTitle,

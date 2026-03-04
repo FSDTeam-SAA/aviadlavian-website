@@ -5,14 +5,14 @@ const page = async ({
   params,
   searchParams,
 }: {
-  params: Promise<{ subspecialty: string; questionId: string }>;
+  params: Promise<{ subspecialtyId: string }>;
   searchParams?: Promise<{
     question?: string | string[];
     subspecialty?: string | string[];
     chapter?: string | string[];
   }>;
 }) => {
-  const { subspecialty, questionId } = await params;
+  const { subspecialtyId } = await params;
   const search = searchParams ? await searchParams : undefined;
 
   const question = Array.isArray(search?.question)
@@ -31,9 +31,9 @@ const page = async ({
     <main className="min-h-[calc(100vh-4rem)] bg-slate-100 p-4 sm:p-6 lg:p-8 dark:bg-slate-950">
       <FlashCardDetails
         question={question}
-        subspecialty={subspecialtyTitle || subspecialty}
+        subspecialty={subspecialtyTitle}
         chapter={chapterTitle}
-        questionId={questionId}
+        questionId={subspecialtyId}
       />
     </main>
   );
