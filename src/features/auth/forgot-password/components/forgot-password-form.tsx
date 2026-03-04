@@ -114,14 +114,14 @@ const ForgotPasswordForm = () => {
                 disabled={isPending}
                 className="w-full bg-[#0fb7a8] py-6 text-white hover:bg-[#0da396] disabled:cursor-not-allowed mt-4"
               >
-                <Spinner /> Send Code
+                <Spinner /> Send Reset Password Link
               </Button>
             ) : (
               <Button
                 type="submit"
                 className="w-full bg-[#0fb7a8] py-6 text-white hover:bg-[#0da396] mt-4"
               >
-                Send Code
+                Send Reset Password Link
               </Button>
             )}
           </form>
