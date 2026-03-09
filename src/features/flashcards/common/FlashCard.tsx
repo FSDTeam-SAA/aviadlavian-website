@@ -14,6 +14,7 @@ type FlashCardProps = {
   chapters: number;
   icon?: string;
   chapterTitles?: string[];
+  injuryIds?: string[];
 };
 
 const FlashCard = ({
@@ -22,6 +23,7 @@ const FlashCard = ({
   chapters,
   icon,
   chapterTitles,
+  injuryIds,
 }: FlashCardProps) => {
   const contentTitles =
     chapterTitles && chapterTitles.length > 0
@@ -68,10 +70,10 @@ const FlashCard = ({
         <div className="mt-1 rounded-lg bg-slate-50 p-3 dark:bg-slate-800/70">
           <ul className="space-y-2">
             {contentTitles.map((chapter, index) => (
-              <li key={`${id}-${chapter}`}>
+              <li key={`${injuryIds?.[index] || index}`}>
                 <Link
                   href={{
-                    pathname: `/flashcards/${id}/${index + 1}`,
+                    pathname: `/flashcards/${injuryIds?.[index] || index}`,
                     query: {
                       subspecialty: title,
                       chapter,

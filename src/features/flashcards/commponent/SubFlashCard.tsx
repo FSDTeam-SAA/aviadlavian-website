@@ -2,88 +2,49 @@
 
 import React from "react";
 import Link from "next/link";
+import { useInjuriesByRegion } from "../hooks/useFlashCard";
 
-type QuestionItem = {
-  id: string;
-  question: string;
-  status: "Correct" | "Incorrect";
+type InjuryData = {
+  _id: string;
+  Id: string;
+  Name: string;
+  Primary_Body_Region: string;
+  Secondary_Body_Region: string;
+  Acuity: string;
+  Age_Group: string;
+  Tissue_Type: string[];
+  Etiology_Mechanism: string;
+  Common_Sports: string[];
+  Synonyms_Abbreviations: string[];
+  Importance_Level: string;
+  Description: string;
+  Video_URL: string;
+  Tags_Keywords: string[];
+  Image_URL: string;
+  __v: number;
+  createdAt: string;
+  updatedAt: string;
 };
 
 type SubFlashCardProps = {
+  flashcardId?: string;
   flashcardTitle?: string;
   subspecialtyTitle?: string;
   chapterTitle?: string;
 };
 
-const demoQuestions: QuestionItem[] = [
-  {
-    id: "1",
-    question:
-      "A 65 years old male presents with sudden onset chest pain radiating to his back. What is most likely diagnosis?",
-    status: "Correct",
-  },
-  {
-    id: "2",
-    question:
-      "A 65 years old male presents with sudden onset chest pain radiating to his back. What is most likely diagnosis?",
-    status: "Incorrect",
-  },
-  {
-    id: "3",
-    question:
-      "A 65 years old male presents with sudden onset chest pain radiating to his back. What is most likely diagnosis?",
-    status: "Correct",
-  },
-  {
-    id: "4",
-    question:
-      "A 65 years old male presents with sudden onset chest pain radiating to his back. What is most likely diagnosis?",
-    status: "Correct",
-  },
-  {
-    id: "5",
-    question:
-      "A 65 years old male presents with sudden onset chest pain radiating to his back. What is most likely diagnosis?",
-    status: "Correct",
-  },
-  {
-    id: "6",
-    question:
-      "A 65 years old male presents with sudden onset chest pain radiating to his back. What is most likely diagnosis?",
-    status: "Correct",
-  },
-  {
-    id: "7",
-    question:
-      "A 65 years old male presents with sudden onset chest pain radiating to his back. What is most likely diagnosis?",
-    status: "Correct",
-  },
-  {
-    id: "8",
-    question:
-      "A 65 years old male presents with sudden onset chest pain radiating to his back. What is most likely diagnosis?",
-    status: "Correct",
-  },
-  {
-    id: "9",
-    question:
-      "A 65 years old male presents with sudden onset chest pain radiating to his back. What is most likely diagnosis?",
-    status: "Correct",
-  },
-  {
-    id: "10",
-    question:
-      "A 65 years old male presents with sudden onset chest pain radiating to his back. What is most likely diagnosis?",
-    status: "Incorrect",
-  },
-];
-
 const SubFlashCard = ({
+  flashcardId,
   flashcardTitle = "Flashcard",
   subspecialtyTitle = "Knee",
   chapterTitle = "Chondromalacia Patella",
 }: SubFlashCardProps) => {
-  const completedQuestions = 177;
+  const { data: injuriesData, isLoading } = useInjuriesByRegion(
+    subspecialtyTitle || "",
+  );
+
+  const injuries: InjuryData[] = injuriesData?.data || [];
+  const completedQuestions = injuries.length;
   const completedPercent = 81;
 
   return (
@@ -97,13 +58,17 @@ const SubFlashCard = ({
           <span>{flashcardTitle}</span>
           <span className="mx-1">&gt;</span>
           <span>{subspecialtyTitle}</span>
-          <span className="mx-1">&gt;</span>
-          <span>{chapterTitle}</span>
+          {chapterTitle && (
+            <>
+              <span className="mx-1">&gt;</span>
+              <span>{chapterTitle}</span>
+            </>
+          )}
         </div>
 
         <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-5 dark:border-slate-700 dark:bg-slate-800/60">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-            {chapterTitle} Flashcards
+            {subspecialtyTitle} Flashcards
           </h2>
 
           <p className="mt-3 text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -134,48 +99,49 @@ const SubFlashCard = ({
 
         <div className="mt-6">
           <h2 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
-            Choose a subspecialty to study
+            Choose an injury to study
           </h2>
 
-          <ul className="mt-4 space-y-3">
-            {demoQuestions.map((item) => (
-              <li
-                key={item.id}
-                className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900"
-              >
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-                  <div className="min-w-0">
-                    <p className="text-sm text-slate-800 dark:text-slate-200">
-                      <span className="font-medium">Q :</span> {item.question}
-                    </p>
-                    <Link
-                      href={{
-                        pathname: `/flashcards/subspecialty/${item.id}`,
-                        query: {
-                          question: item.question,
-                          subspecialty: subspecialtyTitle,
-                          chapter: chapterTitle,
-                        },
-                      }}
-                      className="mt-1 inline-block text-sm font-semibold text-orange-700 transition hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300"
-                    >
-                      Reveal answer
-                    </Link>
+          {isLoading ? (
+            <div className="mt-4 text-center text-slate-600 dark:text-slate-400">
+              Loading injuries...
+            </div>
+          ) : injuries.length === 0 ? (
+            <div className="mt-4 text-center text-slate-600 dark:text-slate-400">
+              No injuries found
+            </div>
+          ) : (
+            <ul className="mt-4 space-y-3">
+              {injuries.map((injury, index) => (
+                <li
+                  key={injury._id}
+                  className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900"
+                >
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                    <div className="min-w-0">
+                      <p className="text-sm text-slate-800 dark:text-slate-200">
+                        <span className="font-medium">Q{index + 1}:</span>{" "}
+                        {injury.Name}
+                        {injury.Secondary_Body_Region && (
+                          <span className="ml-1 text-slate-600 dark:text-slate-400">
+                            - {injury.Secondary_Body_Region}
+                          </span>
+                        )}
+                      </p>
+                      <Link
+                        href={{
+                          pathname: `/flashcards/${flashcardId}/${injury._id}`,
+                        }}
+                        className="mt-1 inline-block text-sm font-semibold text-orange-700 transition hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300"
+                      >
+                        Reveal answer
+                      </Link>
+                    </div>
                   </div>
-
-                  <span
-                    className={`shrink-0 text-sm font-medium ${
-                      item.status === "Correct"
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-red-600 dark:text-red-400"
-                    }`}
-                  >
-                    {item.status}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>
