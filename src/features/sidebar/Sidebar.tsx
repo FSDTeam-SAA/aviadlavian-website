@@ -43,7 +43,7 @@ const menuItems: MenuItem[] = [
   { label: "Question Bank", icon: SquareKanban },
   { label: "Learning Plan", icon: FileText },
   { label: "Flashcards", icon: Sparkles, url: "/flashcards" },
-  { label: "Custom Quizzes", icon: BookText },
+  { label: "Custom Quizzes", icon: BookText, url: "/custom-quizzes" },
   { label: "Settings", icon: Settings },
   { label: "Feedback", icon: MessageSquare },
 ];
