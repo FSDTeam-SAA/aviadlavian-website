@@ -29,6 +29,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { url } from "inspector/promises";
 
 type MenuItem = {
   label: string;
@@ -44,7 +45,7 @@ const menuItems: MenuItem[] = [
   { label: "Learning Plan", icon: FileText },
   { label: "Flashcards", icon: Sparkles, url: "/flashcards" },
   { label: "Custom Quizzes", icon: BookText },
-  { label: "Settings", icon: Settings },
+  { label: "Settings", icon: Settings, url: "/settings" },
   { label: "Feedback", icon: MessageSquare },
 ];
 
