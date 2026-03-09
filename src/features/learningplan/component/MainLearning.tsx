@@ -1,3 +1,4 @@
+// src/features/learningplan/component/MainLearning.tsx
 "use client";
 
 import React from "react";
@@ -108,7 +109,7 @@ const MainLearning = () => {
                           `/learningplan/${encodeURIComponent(group.region.toLowerCase())}`,
                         )
                       }
-                      className="rounded-lg bg-[#0077A3] px-4 py-2 text-sm font-medium text-white hover:bg-[#005f82] transition-colors"
+                      className="rounded-lg cursor-pointer bg-[#0077A3] px-4 py-2 text-sm font-medium text-white hover:bg-[#005f82] transition-colors"
                     >
                       View Learning Plan
                     </button>

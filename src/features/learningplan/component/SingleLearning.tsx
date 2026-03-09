@@ -1,7 +1,9 @@
+// src/features/learningplan/component/SingleLearning.tsx
 "use client";
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useLearningPlan } from "../hooks/useLearningPlan";
 import { findBodyRegion, getTopicProgress } from "../utils/learningplanHelpers";
 import { TopicProgress } from "../types/learningplan.types";
@@ -34,7 +36,15 @@ const ProgressBar = ({
 };
 
 // ── Topic Progress Card ──
-const TopicProgressCard = ({ progress }: { progress: TopicProgress }) => {
+const TopicProgressCard = ({
+  progress,
+  bodyRegion,
+}: {
+  progress: TopicProgress;
+  bodyRegion: string;
+}) => {
+  const router = useRouter();
+
   return (
     <div className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       {/* Topic Name */}
@@ -156,8 +166,13 @@ const TopicProgressCard = ({ progress }: { progress: TopicProgress }) => {
       </div>
 
       {/* View Details Button */}
-      <div className="flex justify-center">
-        <button className="rounded-lg bg-[#0077A3] px-5 py-2 text-sm font-medium text-white hover:bg-[#005f82] transition-colors">
+      <div className="flex justify-center mt-2">
+        <button
+          onClick={() =>
+            router.push(`/learningplan/${bodyRegion}/${progress.topic._id}`)
+          }
+          className="rounded-lg cursor-pointer bg-[#0077A3] px-5 py-2 text-sm font-medium text-white hover:bg-[#005f82] transition-colors"
+        >
           View Details
         </button>
       </div>
@@ -268,7 +283,11 @@ const SingleLearning = ({ bodyRegion }: SingleLearningProps) => {
             </div>
           ) : (
             topicProgressList.map((progress) => (
-              <TopicProgressCard key={progress.topic._id} progress={progress} />
+              <TopicProgressCard
+                key={progress.topic._id}
+                progress={progress}
+                bodyRegion={encodeURIComponent(decodedRegion.toLowerCase())}
+              />
             ))
           )}
         </div>

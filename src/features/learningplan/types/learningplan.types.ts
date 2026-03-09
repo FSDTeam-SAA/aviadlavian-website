@@ -14,6 +14,8 @@ export interface PopulatedFlashcard {
   _id: string;
   flashcardId: {
     _id: string;
+    question?: string;
+    answer?: string;
     topicId: Topic;
     [key: string]: unknown;
   };

@@ -8,7 +8,7 @@ export async function createLearningPlan(): Promise<unknown> {
 
 export async function getAllLearningPlans(): Promise<GetAllLearningPlansResponse> {
   const res = await api.get<GetAllLearningPlansResponse>(
-    "/learning-plan/get-all",
+    "/learning-plan/get-all?limit=500",
   );
   return res.data;
 }

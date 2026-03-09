@@ -1,3 +1,4 @@
+// src/app/(dashboard)/learningplan/page.tsx
 import MainLearning from "@/features/learningplan/component/MainLearning";
 import React from "react";
 

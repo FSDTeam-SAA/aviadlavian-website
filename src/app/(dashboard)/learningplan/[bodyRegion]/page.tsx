@@ -1,3 +1,4 @@
+// src/app/(dashboard)/learningplan/[bodyRegion]/page.tsx
 import SingleLearning from "@/features/learningplan/component/SingleLearning";
 
 interface PageProps {

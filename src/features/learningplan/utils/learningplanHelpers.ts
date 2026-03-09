@@ -4,6 +4,8 @@ import {
   BodyRegionGroup,
   TopicProgress,
   ProgressInfo,
+  PopulatedFlashcard,
+  PopulatedArticle,
 } from "../types/learningplan.types";
 
 // ── Calculate progress helper ──
@@ -124,4 +126,58 @@ export function findBodyRegion(
   return groups.find(
     (g) => g.region.toLowerCase() === bodyRegion.toLowerCase(),
   );
+}
+
+// ── Get flashcards for a specific topic ──
+export function getTopicFlashcards(
+  plans: LearningPlan[],
+  topicId: string,
+): PopulatedFlashcard[] {
+  const flashcards: PopulatedFlashcard[] = [];
+  for (const plan of plans) {
+    for (const fc of plan.flashcards) {
+      if (fc.flashcardId?.topicId?._id === topicId) {
+        flashcards.push(fc);
+      }
+    }
+  }
+  return flashcards;
+}
+
+// ── Get articles for a specific body region and group by secondary region ──
+export function groupArticlesBySecondaryRegion(
+  plans: LearningPlan[],
+  bodyRegion: string,
+) {
+  const grouped: Record<string, PopulatedArticle[]> = {};
+
+  for (const plan of plans) {
+    for (const art of plan.articles) {
+      const topicIds = art.articleId?.topicIds;
+      if (!Array.isArray(topicIds)) continue;
+
+      // Filter: Does this article belong to the current Primary_Body_Region?
+      const matchingTopic = topicIds.find(
+        (t) =>
+          t.Primary_Body_Region?.toLowerCase() === bodyRegion.toLowerCase(),
+      );
+
+      if (matchingTopic) {
+        // Group by Secondary_Body_Region (fallback to "General" if null/empty)
+        const secondaryRegion =
+          matchingTopic.Secondary_Body_Region || "General";
+
+        if (!grouped[secondaryRegion]) {
+          grouped[secondaryRegion] = [];
+        }
+
+        // Avoid pushing exact duplicate articles
+        if (!grouped[secondaryRegion].some((a) => a._id === art._id)) {
+          grouped[secondaryRegion].push(art);
+        }
+      }
+    }
+  }
+
+  return grouped;
 }
