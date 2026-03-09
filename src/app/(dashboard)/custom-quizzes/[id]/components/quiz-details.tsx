@@ -226,7 +226,7 @@ const QuizDetails = () => {
   const handleCloseResult = () => {
     setShowResult(false);
     // Optionally redirect to results page or dashboard
-    router.push("/quizzes/result"); // or wherever you want to go after closing
+    router.push(`/custom-quizzes/${id}/result`); // or wherever you want to go after closing
   };
 
   if (isLoading)
