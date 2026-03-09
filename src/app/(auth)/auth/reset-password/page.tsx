@@ -1,9 +1,12 @@
+import React, { Suspense } from "react";
 import ResetPasswordForm from "@/features/auth/reset-password/components/reset-password-form";
 
 const page = () => {
   return (
     <div>
-      <ResetPasswordForm />
+      <Suspense fallback={<div>Loading...</div>}>
+        <ResetPasswordForm />
+      </Suspense>
     </div>
   );
 };
