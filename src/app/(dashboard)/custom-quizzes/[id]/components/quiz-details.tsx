@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -12,10 +12,117 @@ import {
   Loader2,
   Pause,
   Play,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
+
+// Result Popup Component
+const ResultPopup = ({
+  result,
+  onClose,
+}: {
+  result: any;
+  onClose: () => void;
+}) => {
+  const scorePercentage = result?.data?.scorePercentage || 0;
+
+  // Determine color based on score
+  const getScoreColor = () => {
+    if (scorePercentage >= 80) return "text-green-600";
+    if (scorePercentage >= 60) return "text-yellow-600";
+    return "text-red-600";
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 relative animate-in fade-in zoom-in duration-300">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          <X size={20} />
+        </button>
+
+        {/* Icon */}
+        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg
+            className="w-10 h-10 text-green-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+        </div>
+
+        {/* Title */}
+        <h2 className="text-2xl font-bold text-center text-gray-900 mb-2">
+          Quiz Complete!
+        </h2>
+
+        {/* Score message */}
+        <p className="text-center text-gray-600 mb-6">
+          You have completed the quiz and you scored{" "}
+          <span className={`font-bold text-2xl ${getScoreColor()}`}>
+            {scorePercentage}%
+          </span>{" "}
+          of the questions you answered.
+        </p>
+
+        {/* Score details */}
+        <div className="bg-gray-50 rounded-xl p-4 mb-6 space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600">Total Questions:</span>
+            <span className="font-semibold">
+              {result?.data?.totalQuestions || 0}
+            </span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600">Attempted:</span>
+            <span className="font-semibold">
+              {result?.data?.attemptedQuestions || 0}
+            </span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600">Correct Answers:</span>
+            <span className="font-semibold text-green-600">
+              {result?.data?.correctAnswers || 0}
+            </span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600">Incorrect Answers:</span>
+            <span className="font-semibold text-red-600">
+              {result?.data?.incorrectAnswers || 0}
+            </span>
+          </div>
+          <div className="flex justify-between items-center pt-2 border-t">
+            <span className="text-gray-600">Marks Obtained:</span>
+            <span className="font-semibold text-lg">
+              {result?.data?.obtainedMarks || 0} /{" "}
+              {result?.data?.totalMarks || 0}
+            </span>
+          </div>
+        </div>
+
+        {/* Button */}
+        <Button
+          onClick={onClose}
+          className="w-full bg-[#0e308d] hover:bg-[#0a246b] py-6 text-lg"
+        >
+          See Your Result
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 const QuizDetails = () => {
   const { id } = useParams();
@@ -30,6 +137,8 @@ const QuizDetails = () => {
   >({});
   const [timeLeft, setTimeLeft] = useState(80 * 60); // 1h 20m in seconds
   const [isPaused, setIsPaused] = useState(false);
+  const [showResult, setShowResult] = useState(false);
+  const [submissionResult, setSubmissionResult] = useState<any>(null);
 
   // 1. Fetch Quiz Data
   const { data, isLoading } = useQuery({
@@ -93,9 +202,11 @@ const QuizDetails = () => {
       if (!res.ok) throw new Error("Submission failed");
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success("Exam submitted successfully!");
-      router.push("/quizzes/result"); // Change to your result path
+      setSubmissionResult(data);
+      setShowResult(true);
+      // Don't redirect immediately, show popup instead
     },
     onError: (err: any) => toast.error(err.message),
   });
@@ -112,6 +223,12 @@ const QuizDetails = () => {
     submitMutation.mutate(payload);
   };
 
+  const handleCloseResult = () => {
+    setShowResult(false);
+    // Optionally redirect to results page or dashboard
+    router.push("/quizzes/result"); // or wherever you want to go after closing
+  };
+
   if (isLoading)
     return (
       <div className="flex justify-center items-center h-screen">
@@ -123,6 +240,11 @@ const QuizDetails = () => {
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
+      {/* Result Popup */}
+      {showResult && submissionResult && (
+        <ResultPopup result={submissionResult} onClose={handleCloseResult} />
+      )}
+
       <h1 className="text-3xl font-bold text-slate-900 mb-6">Custom Quizzes</h1>
 
       {/* Header Info Cards */}
