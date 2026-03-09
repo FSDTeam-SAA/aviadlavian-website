@@ -4,49 +4,58 @@ import React, { useState } from "react";
 import { Heart } from "lucide-react";
 import { Accordion } from "@/components/ui/accordion";
 import FlashCard from "../common/FlashCard";
+import { useInjuryFilters } from "../hooks/useFlashCard";
+import { useQueries } from "@tanstack/react-query";
+import { getInjuriesByRegion } from "../api/flashcard";
 
-type SubspecialtyItem = {
-  id: string;
-  title: string;
-  chapters: number;
-  icon?: string;
-  chapterTitles?: string[];
+type InjuryData = {
+  _id: string;
+  Id: string;
+  Name: string;
+  Primary_Body_Region: string;
+  Secondary_Body_Region: string;
+  Acuity: string;
+  Age_Group: string;
+  Tissue_Type: string[];
+  Etiology_Mechanism: string;
+  Common_Sports: string[];
+  Synonyms_Abbreviations: string[];
+  Importance_Level: string;
+  Description: string;
+  Video_URL: string;
+  Tags_Keywords: string[];
+  Image_URL: string;
+  __v: number;
+  createdAt: string;
+  updatedAt: string;
 };
-
-const kneeChapterTitles = [
-  "Suprapatellar Fat Pad Impingment",
-  "Patellar Ligament-Lateral Femoral Condyle Friction Syndrome",
-  "Infrapatellar Fat Pad Impingment (Hoffa'S Disease)",
-  "Meniscal Tears/Perimeniscal Cysts",
-  "Discoid Meniscus",
-  "Osteoarthritis",
-  "Prepatellar Bursitis",
-  "Superficial Infrapatellar Bursitis",
-  "Deep Infrapatellar Bursitis",
-  "Pes Anserine Bursitis",
-  "Osteochondritis Dissecans Of The Knee/Patella",
-  "Osteonecrosis Of The Knee",
-  "Charcot Of The Knee",
-  "Chondromalacia Patella",
-  "Saphenous Neuropathy",
-];
-
-const demoSubspecialties: SubspecialtyItem[] = [
-  { id: "1", title: "Knee", chapters: 15, chapterTitles: kneeChapterTitles },
-  { id: "2", title: "Shoulder, Scapula and Arm", chapters: 8 },
-  { id: "3", title: "Shoulder Osteoarthritis", chapters: 10 },
-  { id: "4", title: "Shin, Ankle and Foot", chapters: 6 },
-  { id: "5", title: "Anterior Pelvis, Hip and Thigh", chapters: 20 },
-  { id: "6", title: "Lumbar Spine, Posterior Pelvis, SIJ", chapters: 12 },
-  { id: "7", title: "Wrist, Hand and Finger", chapters: 9 },
-  { id: "8", title: "Elbow and Forearm", chapters: 13 },
-  { id: "9", title: "Hand and Neck", chapters: 13 },
-  { id: "10", title: "Thoracic Spine and Rib Wall", chapters: 15 },
-];
 
 const MainFlashCard = () => {
   const [isAnswerRevealed, setIsAnswerRevealed] = useState(false);
+  const { data: filters } = useInjuryFilters();
+  const bodyRegions = filters?.data?.bodyRegions || [];
 
+  // Fetch injuries for all body regions using useQueries
+  const injuriesQueries = useQueries({
+    queries: bodyRegions.map((region: string) => ({
+      queryKey: ["injuriesByRegion", region],
+      queryFn: () => getInjuriesByRegion(region),
+      enabled: !!region,
+    })),
+  });
+
+  // Create a map of region -> injuries data
+  const injuriesByRegionMap = bodyRegions.reduce(
+    (acc: Record<string, InjuryData[]>, region: string, index: number) => {
+      const queryResult = injuriesQueries[index];
+      if (queryResult?.data) {
+        const responseData = queryResult.data as { data: InjuryData[] };
+        acc[region] = responseData.data || [];
+      }
+      return acc;
+    },
+    {},
+  );
   return (
     <div className="w-full">
       <div className="rounded-2xl border border-slate-200/80 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
@@ -104,16 +113,41 @@ const MainFlashCard = () => {
           </h2>
 
           <Accordion type="single" collapsible className="space-y-2">
-            {demoSubspecialties.map((item) => (
-              <FlashCard
-                key={item.id}
-                id={item.id}
-                title={item.title}
-                chapters={item.chapters}
-                icon={item.icon}
-                chapterTitles={item.chapterTitles}
-              />
-            ))}
+            {bodyRegions.map((region: string) => {
+              const injuries = injuriesByRegionMap[region] || [];
+
+              // Map injuries to include IDs and titles
+              const injuryItems = injuries.map((injury: InjuryData) => {
+                const secondaryRegion = injury.Secondary_Body_Region
+                  ? ` - ${injury.Secondary_Body_Region}`
+                  : "";
+                return {
+                  id: injury._id,
+                  title: `${injury.Name}${secondaryRegion}`,
+                };
+              });
+
+              // Get chapter titles for display
+              const chapterTitles = injuryItems.map(
+                (item: { id: string; title: string }) => item.title,
+              );
+
+              // Get injury IDs for navigation
+              const injuryIds = injuryItems.map(
+                (item: { id: string; title: string }) => item.id,
+              );
+
+              return (
+                <FlashCard
+                  key={region}
+                  id={region}
+                  title={region}
+                  chapters={injuries.length}
+                  chapterTitles={chapterTitles}
+                  injuryIds={injuryIds}
+                />
+              );
+            })}
           </Accordion>
         </div>
       </div>

@@ -86,8 +86,6 @@ const handler = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        console.log("Login attempt for email:", credentials?.email);
-
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Email and password are required");
         }
@@ -116,7 +114,6 @@ const handler = NextAuth({
           if (!email || !accessToken || !refreshToken) {
             throw new Error("Invalid response from server");
           }
-
           // Return user object with token
           return {
             id: data.data.userId || email,
