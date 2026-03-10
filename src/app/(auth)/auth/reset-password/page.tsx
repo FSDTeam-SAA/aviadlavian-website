@@ -1,3 +1,4 @@
+import React, { Suspense } from "react";
 import ResetPasswordForm from "@/features/auth/reset-password/components/reset-password-form";
 import { Suspense } from "react";
 

@@ -29,7 +29,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { url } from "inspector/promises";
 
 type MenuItem = {
   label: string;
@@ -42,8 +41,10 @@ const menuItems: MenuItem[] = [
   { label: "Library", icon: Library, url: "/library" },
   { label: "About", icon: Info },
   { label: "Question Bank", icon: SquareKanban },
-  { label: "Learning Plan", icon: FileText },
+  { label: "Learning Plan", icon: FileText, url: "/learningplan" },
   { label: "Flashcards", icon: Sparkles, url: "/flashcards" },
+  { label: "Custom Quizzes", icon: BookText, url: "/custom-quizzes" },
+  { label: "Settings", icon: Settings },
   { label: "Custom Quizzes", icon: BookText },
   { label: "Settings", icon: Settings, url: "/settings" },
   { label: "Feedback", icon: MessageSquare },
