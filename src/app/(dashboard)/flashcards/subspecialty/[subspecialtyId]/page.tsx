@@ -30,10 +30,9 @@ const page = async ({
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-slate-100 p-4 sm:p-6 lg:p-8 dark:bg-slate-950">
       <FlashCardDetails
-        question={question}
+        lastid={subspecialtyId}
         subspecialty={subspecialtyTitle}
         chapter={chapterTitle}
-        questionId={subspecialtyId}
       />
     </main>
   );
