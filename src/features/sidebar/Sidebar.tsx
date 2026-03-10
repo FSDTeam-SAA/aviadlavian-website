@@ -45,6 +45,8 @@ const menuItems: MenuItem[] = [
   { label: "Flashcards", icon: Sparkles, url: "/flashcards" },
   { label: "Custom Quizzes", icon: BookText, url: "/custom-quizzes" },
   { label: "Settings", icon: Settings },
+  { label: "Custom Quizzes", icon: BookText },
+  { label: "Settings", icon: Settings, url: "/settings" },
   { label: "Feedback", icon: MessageSquare },
 ];
 

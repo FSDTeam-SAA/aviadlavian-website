@@ -2,37 +2,50 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import {
+  useInjuryFlashcardId,
+  useCreateFlashcardReview,
+} from "../hooks/useFlashCard";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type FlashCardDetailsProps = {
-  question?: string;
   subspecialty?: string;
   chapter?: string;
-  questionId?: string;
-};
-
-const demoAnswers: Record<string, string> = {
-  "1": "Pulmonary Embolism",
-  "2": "Aortic Dissection",
-  "3": "Myocardial Infarction",
-  "4": "Pulmonary Embolism",
-  "5": "Tension Pneumothorax",
-  "6": "Pulmonary Embolism",
-  "7": "Acute Pericarditis",
-  "8": "Pulmonary Embolism",
-  "9": "Esophageal Rupture",
-  "10": "Pulmonary Embolism",
+  lastid?: string;
 };
 
 const FlashCardDetails = ({
-  question = "A 65 years old male presents with sudden onset chest pain radiating to his back. What is most likely diagnosis?",
   subspecialty = "Knee",
   chapter = "Chondromalacia Patella",
-  questionId = "1",
+  lastid,
 }: FlashCardDetailsProps) => {
   const [isAnswerRevealed, setIsAnswerRevealed] = useState(false);
   const [confidenceRating, setConfidenceRating] = useState<string | null>(null);
+  const [showIntervalInput, setShowIntervalInput] = useState(false);
+  const [customInterval, setCustomInterval] = useState("");
 
-  const answer = demoAnswers[questionId] || "Pulmonary Embolism";
+  const { data: flashdata } = useInjuryFlashcardId(lastid || "");
+  const createReviewMutation = useCreateFlashcardReview();
+
+  const handleSubmitReview = () => {
+    if (!lastid || !confidenceRating || !customInterval) return;
+
+    const resultMap: Record<string, string> = {
+      correct: "correct",
+      incorrect: "wrong",
+      unsure: "unsure",
+    };
+
+    createReviewMutation.mutate({
+      flashcardId: lastid,
+      result: resultMap[confidenceRating] || "wrong",
+      customInterval: customInterval,
+    });
+  };
+
+  const question = flashdata?.data?.question || "Loading...";
+  const answer = flashdata?.data?.answer || "Loading...";
 
   return (
     <div className="w-full">
@@ -139,6 +152,22 @@ const FlashCardDetails = ({
               >
                 Unsure
               </button>
+              {!showIntervalInput ? (
+                <Button onClick={() => setShowIntervalInput(true)}>
+                  How many times have you seen this question before?
+                </Button>
+              ) : (
+                <div className="flex gap-2 items-center">
+                  <Input
+                    type="text"
+                    placeholder="e.g., 2m, 1h, 3d"
+                    value={customInterval}
+                    onChange={(e) => setCustomInterval(e.target.value)}
+                    className="w-40"
+                  />
+                  <Button onClick={handleSubmitReview}>Submit</Button>
+                </div>
+              )}
             </div>
           </div>
           {/* )} */}
