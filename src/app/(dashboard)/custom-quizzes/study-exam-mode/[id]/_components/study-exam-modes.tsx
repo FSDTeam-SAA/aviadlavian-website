@@ -215,7 +215,7 @@ const StudyExamModes = () => {
 
   const handleCloseResult = () => {
     setShowResult(false);
-    router.push(`/custom-quizzes/${quizId}/result`); // রেজাল্ট পেজে রিডাইরেক্ট
+    router.push(`/custom-quizzes/study-exam-mode/${quizId}/history`); // রেজাল্ট পেজে রিডাইরেক্ট
   };
 
   if (isLoading)
