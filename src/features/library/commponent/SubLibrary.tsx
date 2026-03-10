@@ -1,173 +1,181 @@
+"use client";
+
 import Link from "next/link";
-import React from "react";
-import { ChevronRight, CirclePlay, PencilLine } from "lucide-react";
+import React, { useMemo } from "react";
+import { ChevronRight, CirclePlay, PencilLine, Edit3 } from "lucide-react";
+import { useLibrary } from "../hooks/uselibrary";
 
 type SubLibraryProps = {
   libraryId: string;
 };
 
-type DemoChapter = {
-  id: string;
-  chapter: string;
-  title: string;
-  isHighlighted?: boolean;
-};
-
-const demoSubLibraryData = {
-  sectionTitle: "Knee",
-  category: "Text",
-  topic: "Knee",
-  selectedChapterTitle: "Distal It Band Syndrome",
-  chapters: [
-    {
-      id: "chapter-01",
-      chapter: "Chapter 01",
-      title: "Distal It Band Syndrome",
-    },
-    {
-      id: "chapter-02",
-      chapter: "Chapter 02",
-      title: "Patellar Tendinopathy",
-      isHighlighted: true,
-    },
-    {
-      id: "chapter-03",
-      chapter: "Chapter 03",
-      title: "Popliteus Tendinopathy",
-    },
-    {
-      id: "chapter-04",
-      chapter: "Chapter 04",
-      title: "Extensor Mechanism Injuries",
-    },
-    {
-      id: "chapter-05",
-      chapter: "Chapter 05",
-      title: "Quadriceps Tendon Rupture",
-    },
-    {
-      id: "chapter-06",
-      chapter: "Chapter 06",
-      title: "Patellar Sleeve Fracture",
-    },
-    {
-      id: "chapter-09",
-      chapter: "Chapter 09",
-      title: "Patellar Tendon Rupture",
-    },
-    {
-      id: "chapter-10",
-      chapter: "Chapter 10",
-      title: "Epidemiology and Risk Factors",
-    },
-    {
-      id: "chapter-11",
-      chapter: "Chapter 11",
-      title: "Epidemiology and Risk Factors",
-    },
-    {
-      id: "chapter-12",
-      chapter: "Chapter 12",
-      title: "Epidemiology and Risk Factors",
-    },
-    {
-      id: "chapter-13",
-      chapter: "Chapter 13",
-      title: "Epidemiology and Risk Factors",
-    },
-  ] as DemoChapter[],
-};
-
 const SubLibrary = ({ libraryId }: SubLibraryProps) => {
-  const data = demoSubLibraryData;
+  const { data, isLoading } = useLibrary({ limit: 100 });
 
-  const chapterHref = (chapterId: string) =>
-    `/library/${libraryId}/${chapterId}`;
+  const article = useMemo(
+    () => (data?.data ?? []).find((a) => a._id === libraryId),
+    [data?.data, libraryId],
+  );
 
-  const selectedChapterId = data.chapters[0]?.id;
+  if (isLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-emerald-600" />
+      </div>
+    );
+  }
+
+  if (!article) {
+    return (
+      <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+        <h2 className="text-xl font-bold">Article not found</h2>
+        <Link href="/library" className="mt-4 text-emerald-600 hover:underline">
+          Return to Library
+        </Link>
+      </div>
+    );
+  }
+
+  const regionName =
+    article.topicIds?.[0]?.Primary_Body_Region || "Unknown Region";
 
   return (
-    <section className="w-full  rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 dark:border-slate-700 dark:bg-slate-900">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
-            {data.sectionTitle}
-          </h2>
-          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-            <span className="text-emerald-700 dark:text-emerald-400">
-              {data.category}
-            </span>
-            <span className="px-1">›</span>
-            <span>{data.topic}</span>
-            <span className="px-1">›</span>
-            <span>{data.selectedChapterTitle}</span>
-          </p>
-        </div>
+    <div className="w-full">
+      <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        {/* Header Section */}
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold text-slate-900 dark:text-white sm:text-5xl">
+              {article.name}
+            </h1>
+            <nav className="flex items-center gap-1.5 text-xs font-bold">
+              <Link
+                href="/library"
+                className="text-[#007b5e] hover:underline uppercase"
+              >
+                Text
+              </Link>
+              <span className="text-slate-400">›</span>
+              <span className="text-[#007b5e] uppercase">{regionName}</span>
+              <span className="text-slate-400">›</span>
+              <span className="text-slate-600 dark:text-slate-300 uppercase truncate max-w-[200px]">
+                {article.name}
+              </span>
+            </nav>
+          </div>
 
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/60">
-          <div className="flex items-start gap-2.5">
-            <CirclePlay size={24} className="mt-0.5 text-blue-700" />
+          {/* Video Tutorial Card */}
+          <div className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950 min-w-[260px]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/20">
+              <CirclePlay
+                size={32}
+                fill="currentColor"
+                className="text-white dark:text-slate-950"
+              />
+              <CirclePlay size={32} className="absolute text-blue-600" />
+            </div>
             <div>
-              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+              <p className="text-sm font-bold text-slate-900 dark:text-white">
                 Video Tutorial
               </p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-300">
+              <p className="text-[10px] font-medium text-slate-500">
                 How to study with our website
               </p>
             </div>
           </div>
         </div>
+
+        <h3 className="mt-8 text-2xl font-bold text-slate-900 dark:text-white">
+          Table of Contents
+        </h3>
+
+        <div className="mt-4 overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800">
+          {article.topicIds?.map((item, index) => {
+            const chapterNum = String(index + 1).padStart(2, "0");
+
+            return (
+              <Link
+                key={item._id}
+                href={`/library/${libraryId}/${item._id}`}
+                className={`group flex items-center justify-between px-5 py-4 transition hover:bg-slate-50 dark:hover:bg-slate-800/50 ${
+                  index !== (article.topicIds?.length || 0) - 1
+                    ? "border-b border-slate-100 dark:border-slate-800"
+                    : ""
+                }`}
+              >
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#007b5e]">
+                    Chapter {chapterNum}
+                  </p>
+                  <p className="mt-1 text-sm font-bold text-slate-900 dark:text-white">
+                    {item.Name}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  {/* Demo logic for "Has Highlight" tagging */}
+                  {index === 1 && (
+                    <span className="hidden sm:inline-flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-600 dark:bg-amber-900/20 dark:text-amber-400">
+                      <PencilLine size={12} />
+                      Has Highlight
+                    </span>
+                  )}
+                  <ChevronRight
+                    size={20}
+                    className="text-slate-400 transition-transform group-hover:translate-x-1"
+                  />
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Text Notes and Highlights Section */}
+      <div className="mt-12">
+        <h2 className="mb-6 text-2xl font-bold text-slate-900 dark:text-white">
+          Text Notes and Highlights:
+        </h2>
+
+        <div className="grid gap-6 sm:grid-cols-2">
+          {/* Notes Card */}
+          <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-8 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
+            <div className="mb-4 flex items-center justify-center lg:justify-start gap-3">
+              <Edit3 size={28} className="text-slate-900 dark:text-white" />
+              <h3 className="text-3xl font-bold text-slate-900 dark:text-white">
+                Notes
+              </h3>
+            </div>
+            <p className="mb-8 text-center lg:text-left text-sm font-medium text-slate-600 dark:text-slate-400">
+              Your notes, organized by content type and subspecialty
+            </p>
+            <button className="mt-auto flex h-12 items-center justify-center rounded-xl bg-[#007b5e] font-bold text-white transition hover:bg-[#00634b]">
+              0 Notes
+            </button>
+          </div>
+
+          {/* Highlights Card */}
+          <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-8 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
+            <div className="mb-4 flex items-center justify-center lg:justify-start gap-3">
+              <PencilLine
+                size={28}
+                className="text-slate-900 dark:text-white"
+              />
+              <h3 className="text-3xl font-bold text-slate-900 dark:text-white">
+                Highlights
+              </h3>
+            </div>
+            <p className="mb-8 text-center lg:text-left text-sm font-medium text-slate-600 dark:text-slate-400">
+              Content you&apos;ve highlighted, organized by type and
+              subspecialty
+            </p>
+            <button className="mt-auto flex h-12 items-center justify-center rounded-xl bg-[#007b5e] font-bold text-white transition hover:bg-[#00634b]">
+              1 Highlights
+            </button>
+          </div>
+        </div>
       </div>
-
-      <h3 className="mt-3 text-2xl font-semibold text-slate-900 dark:text-slate-100">
-        Table of Contents
-      </h3>
-
-      <div className="mt-2 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
-        {data.chapters.map((item, index) => {
-          const isSelected = item.id === selectedChapterId;
-
-          return (
-            <Link
-              key={item.id}
-              href={chapterHref(item.id)}
-              className={`flex items-center justify-between px-3 py-3 transition hover:bg-slate-50 dark:hover:bg-slate-800 ${
-                isSelected
-                  ? "bg-slate-200/70 dark:bg-slate-800"
-                  : "bg-white dark:bg-slate-900"
-              } ${
-                index !== data.chapters.length - 1
-                  ? "border-b border-slate-200 dark:border-slate-700"
-                  : ""
-              }`}
-            >
-              <div>
-                <p className="text-xs text-slate-700 dark:text-slate-200">
-                  {item.chapter}
-                </p>
-                <p className="text-sm text-slate-900 dark:text-slate-100">
-                  {item.title}
-                </p>
-              </div>
-
-              <div className="ml-2 flex items-center gap-2">
-                {item.isHighlighted ? (
-                  <span className="inline-flex items-center gap-1 rounded-sm bg-amber-50 px-2 py-1 text-[11px] text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
-                    <PencilLine size={11} />
-                    Has Highlight
-                  </span>
-                ) : null}
-
-                <ChevronRight
-                  size={14}
-                  className="text-slate-700 dark:text-slate-300"
-                />
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-    </section>
+    </div>
   );
 };
 
