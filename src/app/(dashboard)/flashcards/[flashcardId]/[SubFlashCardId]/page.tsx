@@ -30,7 +30,11 @@ const page = async ({
         subspecialtyTitle={subspecialtyTitle}
         chapterTitle={chapterTitle}
       /> */}
-      <FlashCardDetails />
+      <FlashCardDetails
+        lastid={SubFlashCardId}
+        subspecialty={subspecialtyTitle}
+        chapter={chapterTitle}
+      />
     </main>
   );
 };

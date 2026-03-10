@@ -2,25 +2,16 @@
 
 import React from "react";
 import Link from "next/link";
-import { useInjuriesByRegion } from "../hooks/useFlashCard";
+import { useAllFlashcards } from "../hooks/useFlashCard";
 
 type InjuryData = {
   _id: string;
-  Id: string;
-  Name: string;
-  Primary_Body_Region: string;
-  Secondary_Body_Region: string;
-  Acuity: string;
-  Age_Group: string;
-  Tissue_Type: string[];
-  Etiology_Mechanism: string;
-  Common_Sports: string[];
-  Synonyms_Abbreviations: string[];
-  Importance_Level: string;
-  Description: string;
-  Video_URL: string;
-  Tags_Keywords: string[];
-  Image_URL: string;
+  question: string;
+  answer: string;
+  topicId: string;
+  difficulty: string;
+  isActive: boolean;
+  userAnswer: string;
   __v: number;
   createdAt: string;
   updatedAt: string;
@@ -39,9 +30,7 @@ const SubFlashCard = ({
   subspecialtyTitle = "Knee",
   chapterTitle = "Chondromalacia Patella",
 }: SubFlashCardProps) => {
-  const { data: injuriesData, isLoading } = useInjuriesByRegion(
-    subspecialtyTitle || "",
-  );
+  const { data: injuriesData, isLoading } = useAllFlashcards(flashcardId || "");
 
   const injuries: InjuryData[] = injuriesData?.data || [];
   const completedQuestions = injuries.length;
@@ -118,24 +107,24 @@ const SubFlashCard = ({
                   className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900"
                 >
                   <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-                    <div className="min-w-0">
-                      <p className="text-sm text-slate-800 dark:text-slate-200">
-                        <span className="font-medium">Q{index + 1}:</span>{" "}
-                        {injury.Name}
-                        {injury.Secondary_Body_Region && (
-                          <span className="ml-1 text-slate-600 dark:text-slate-400">
-                            - {injury.Secondary_Body_Region}
-                          </span>
-                        )}
-                      </p>
-                      <Link
-                        href={{
-                          pathname: `/flashcards/${flashcardId}/${injury._id}`,
-                        }}
-                        className="mt-1 inline-block text-sm font-semibold text-orange-700 transition hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300"
-                      >
-                        Reveal answer
-                      </Link>
+                    <div className=" w-full flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-slate-800 dark:text-slate-200">
+                          <span className="font-medium">Q{index + 1}:</span>{" "}
+                          {injury.question}
+                        </p>
+                        <Link
+                          href={{
+                            pathname: `/flashcards/${flashcardId}/${injury._id}`,
+                          }}
+                          className="mt-1 inline-block text-sm font-semibold text-orange-700 transition hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300"
+                        >
+                          Reveal answer
+                        </Link>
+                      </div>
+                      <div>
+                        <p>{injury.userAnswer || "Not answered yet"}</p>
+                      </div>
                     </div>
                   </div>
                 </li>
