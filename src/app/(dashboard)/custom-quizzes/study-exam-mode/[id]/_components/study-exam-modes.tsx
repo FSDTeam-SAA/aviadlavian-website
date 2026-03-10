@@ -224,7 +224,7 @@ const StudyExamModes = () => {
       </div>
 
       {/* 2. Question Card */}
-      <div className="bg-white p-6 md:p-10 rounded-[32px] shadow-sm border border-gray-50 mb-6 relative overflow-hidden">
+      <div className="bg-white p-6 md:p-10 rounded-4xl shadow-sm border border-gray-50 mb-6 relative overflow-hidden">
         {/* Loader Overlay for Study Mode Mutation */}
         {answerMutation.isPending && (
           <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-20 flex items-center justify-center">
@@ -295,7 +295,7 @@ const StudyExamModes = () => {
 
       {/* 3. Study Mode Explanation Section */}
       {isStudyMode && studyFeedback && (
-        <div className="bg-white p-6 md:p-8 rounded-[32px] border border-gray-100 shadow-sm mb-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
+        <div className="bg-white p-6 md:p-8 rounded-4xl border border-gray-100 shadow-sm mb-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
           <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
             Explanation :
           </h3>
