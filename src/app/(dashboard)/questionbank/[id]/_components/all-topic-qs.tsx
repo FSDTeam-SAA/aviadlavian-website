@@ -63,7 +63,7 @@ const AllTopicQsAns = ({ topicId }: { topicId: string }) => {
 
           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-10 lg:grid-cols-13 gap-3 mb-12">
             {questions.map((q) => {
-              const status = q.correctAttempts > 0 ? "correct" : "incorrect";
+              const status = q.isCorrect === true ? "correct" : "incorrect";
 
               return (
                 <button

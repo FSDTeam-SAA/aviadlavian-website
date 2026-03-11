@@ -1,36 +1,31 @@
-type Injury = {
-  _id: string;
-  Id: string;
-  Name: string;
-  Image_URL: string;
-  Primary_Body_Region: string;
-  Secondary_Body_Region: string;
-  Acuity: string;
-  Age_Group: string;
-  Tissue_Type: string[];
-  Etiology_Mechanism: string;
-  Common_Sports: string[];
-  Synonyms_Abbreviations: string[];
-  Importance_Level: string;
-  Description: string;
-  Video_URL: string;
-  Tags_Keywords: string[];
-  __v: number;
-  createdAt: string;
-  updatedAt: string;
+type TopicStats = {
+  correctCount: number;
+  incorrectCount: number;
+  correctPercentage: number;
+  incorrectPercentage: number;
 };
 
-type Meta = {
+type Topic = {
+  topicId: string;
+  totalQuestions: number;
+  attemptedCount: number;
+  completionPercentage: number;
+  stats: TopicStats;
+};
+
+type QuestionBankMeta = {
   page: number;
   limit: number;
   total: number;
-  pages: number;
+  totalPage: number;
 };
 
-export type InjuryResponse = {
+type QuestionBankResponse = {
   message: string;
   statusCode: number;
   status: string;
-  meta: Meta;
-  data: Injury[];
+  data: {
+    meta: QuestionBankMeta;
+    data: Topic[];
+  };
 };

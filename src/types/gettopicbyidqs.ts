@@ -19,6 +19,7 @@ type Question = {
   isHidden: boolean;
   isDeleted: boolean;
   createdBy: string;
+  isCorrect: boolean;
   createdAt: string;
   updatedAt: string;
 };
