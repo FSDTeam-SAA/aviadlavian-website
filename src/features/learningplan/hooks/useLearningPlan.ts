@@ -3,6 +3,7 @@ import {
   createLearningPlan,
   getAllLearningPlans,
   updateFlashcard,
+  getMCQs,
 } from "../api/learningplan.api";
 
 export function useLearningPlan() {
@@ -35,5 +36,12 @@ export function useUpdateFlashcard() {
       // Invalidate the learning-plan query to refetch updated data
       queryClient.invalidateQueries({ queryKey: ["learning-plan"] });
     },
+  });
+}
+
+export function useGetMCQs(topicId: string) {
+  return useQuery({
+    queryKey: ["mcqs", topicId],
+    queryFn: () => getMCQs(topicId),
   });
 }

@@ -33,3 +33,15 @@ export async function updateFlashcard(
   );
   return res.data;
 }
+
+export async function getMCQs(topicId: string): Promise<unknown> {
+  const session = await getSession();
+  const token = session?.accessToken || "";
+
+  const res = await api.get(`/questionbank/topics/${topicId}/attempt`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return res.data;
+}

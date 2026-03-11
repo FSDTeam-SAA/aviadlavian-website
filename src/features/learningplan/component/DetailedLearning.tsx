@@ -1,6 +1,5 @@
 // src/features/learningplan/component/DetailedLearning.tsx
 "use client";
-
 import React, { useState } from "react";
 import Link from "next/link";
 import {
@@ -10,19 +9,40 @@ import {
   Zap,
   ChevronDown,
   ChevronRight,
-  ChevronUp,
 } from "lucide-react";
-import { useLearningPlan, useUpdateFlashcard } from "../hooks/useLearningPlan";
+import {
+  useLearningPlan,
+  useUpdateFlashcard,
+  useGetMCQs,
+} from "../hooks/useLearningPlan";
 import {
   findBodyRegion,
   groupArticlesBySecondaryRegion,
   getTopicFlashcards,
 } from "../utils/learningplanHelpers";
 import { PopulatedFlashcard } from "../types/learningplan.types";
+import MCQStatsModal from "./MCQStatsModal";
 
 interface DetailedLearningProps {
   bodyRegion: string;
   topicId: string;
+}
+
+interface MCQDataResponse {
+  success: boolean;
+  data: {
+    topicId: string;
+    totalQuestions: number;
+    attemptedCount: number;
+    completionPercentage: number;
+    stats: {
+      correctCount: number;
+      incorrectCount: number;
+      correctPercentage: number;
+      incorrectPercentage: number;
+    };
+    questions: unknown[];
+  };
 }
 
 // ── Progress Bar Component ──
@@ -157,6 +177,14 @@ const FlashcardItem = ({
 // ── Main Component ──
 const DetailedLearning = ({ bodyRegion, topicId }: DetailedLearningProps) => {
   const { data, isLoading, error } = useLearningPlan();
+
+  // MCQ Data Fetching
+  const { data: rawMcqData } = useGetMCQs(topicId);
+
+  const mcqData = rawMcqData as MCQDataResponse;
+
+  const [isMCQModalOpen, setIsMCQModalOpen] = useState(false);
+
   const decodedRegion = decodeURIComponent(bodyRegion);
 
   // 1. Get Top-Level Data
@@ -190,10 +218,11 @@ const DetailedLearning = ({ bodyRegion, topicId }: DetailedLearningProps) => {
 
   // 5. Derive MCQs Data (IsAnswered)
   // According to instruction: progress = (answered / total) * 100
-  // Since we don't have dedicated MCQs in the API response yet, we represent 0/0 by default
-  // Just in case it gets added later or to match the mockup styling
-  const mcqsDone = 0;
-  const mcqsTotal = 0;
+  // Derived from mcqData
+  const mcqsTotal = mcqData?.data?.totalQuestions || 0;
+  const mcqsDone = mcqData?.data?.attemptedCount || 0;
+  const mcqStats = mcqData?.data?.stats;
+  const mcqQuestions = mcqData?.data?.questions || [];
 
   if (isLoading) {
     return (
@@ -285,13 +314,15 @@ const DetailedLearning = ({ bodyRegion, topicId }: DetailedLearningProps) => {
 
         <p className="text-sm text-slate-600 mb-4 dark:text-slate-400 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
           <span className="font-bold text-[#0077A3]">
-            {mcqsTotal > 0 ? Math.round((mcqsDone / mcqsTotal) * 100) : 0}%
-            correct
+            {mcqStats?.correctPercentage || 0}% correct
           </span>{" "}
           of {mcqsTotal} questions completed
         </p>
 
-        <button className="bg-[#0077A3] text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-[#005f82] transition-colors">
+        <button
+          onClick={() => setIsMCQModalOpen(true)}
+          className="bg-[#0077A3] text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-[#005f82] transition-colors"
+        >
           View Topic Questions
         </button>
       </div>
@@ -436,6 +467,16 @@ const DetailedLearning = ({ bodyRegion, topicId }: DetailedLearningProps) => {
           </div>
         </div>
       </div>
+
+      {/* MCQ Stats Modal */}
+      <MCQStatsModal
+        isOpen={isMCQModalOpen}
+        onClose={() => setIsMCQModalOpen(false)}
+        stats={mcqStats}
+        totalQuestions={mcqsTotal}
+        attemptedCount={mcqsDone}
+        questions={mcqQuestions}
+      />
     </div>
   );
 };
