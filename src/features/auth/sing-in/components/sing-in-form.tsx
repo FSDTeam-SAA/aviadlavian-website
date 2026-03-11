@@ -20,6 +20,7 @@ import { signInSchema } from "../schema/singInSchema";
 import Link from "next/link";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 
 const SignInForm = () => {
   const router = useRouter();
@@ -51,14 +52,17 @@ const SignInForm = () => {
         switch (result.error) {
           case "CredentialsSignin":
             setError("Invalid email or password");
+            toast.error("Invalid email or password");
             break;
           default:
             setError("An error occurred. Please try again.");
+            toast.error("An error occurred. Please try again.");
         }
         console.error("Sign in error:", result.error);
         return;
       }
 
+      toast.success("Signed in successfully!");
       if (values.rememberMe) {
       }
 
@@ -67,6 +71,7 @@ const SignInForm = () => {
     } catch (error) {
       console.error("Sign in error:", error);
       setError("An unexpected error occurred. Please try again.");
+      toast.error("An unexpected error occurred.");
     } finally {
       setIsLoading(false);
     }

@@ -1,255 +1,390 @@
 "use client";
 
-import React from "react";
-import { BookOpen, ClipboardList, PencilLine, Edit3 } from "lucide-react";
+import React, { useMemo, useState, useRef } from "react";
+import Link from "next/link";
+import { BookOpen, ClipboardList, PencilLine, Edit3, X } from "lucide-react";
 import Notes from "./Notes";
 import NotesPanel from "./common/NotesPanel";
 import LearningPlanPanel from "./common/LearningPlanPanel";
 import TocPanel from "./common/TocPanel";
+import {
+  useLibrary,
+  useAnnotations,
+  useSaveAnnotations,
+} from "../hooks/uselibrary";
+import type { AnnotationHighlight, AnnotationNote } from "../hooks/uselibrary";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 type SubLibraryDetailsProps = {
   libraryId: string;
   chapterId: string;
 };
 
-type Highlight = {
-  id: string;
-  text: string;
-  color: string;
-  createdAt: Date;
-};
-
-type Note = {
-  id: string;
-  content: string;
-  section: string;
-  createdAt: Date;
-};
-
-type TOCChapter = {
-  id: string;
-  title: string;
-  isBookmarked: boolean;
-};
-
-// Demo content with HTML
-const demoContent = `
-<h1>Knee</h1>
-<p style="font-size: 12px; color: #666;">Text › Knee › Distal It Band Syndrome</p>
-
-<h2>Distal It Band Syndrome</h2>
-
-<h3>Overview</h3>
-<p>Coronaronar as <strong style="background-color: #fef3c7; padding: 2px 4px;">CVD</strong> ns many constricting corony les do CAD discais, rhythro olvendeis subotical oreo laot, valor de sendo dic, and peripheral artery CV msel the leadlip card of death in the United States, however, from 28 to 2016, the egercised death roteif Despite their improvement CHEMOCCRD</p>
-
-<p>CVD was response for early of east in the userener 2016 Gabaly a third of o CHEMOCCRD</p>
-
-<h3>Recently 60% E morbic commy liferme mx for CVD earment according to date from the Promingham Heart Study had more than Yr for 2014 to 2015 was CVD was response for 42 million US Hospital discharges in 2014 approav measy 8850 lion, the progdies total cost of CVD <strong style="background-color: #fef3c7; padding: 2px 4px;">between 2015 and 2005 ss estimated to remain multe for most persns int to increase acacly for about ajnul 15 years or older</strong></h3>
-
-<p>An estimated d 2 wine utlus sorer than 20 years have a diagnosis of heart falus, a thai common porthway for candiovascular corditions. <strong style="background-color: #fef3c7; padding: 2px 4px;">The prevalance of heart failure is projected to incresso by between 2012 and 2030</strong></p>
-
-<h4>Risk Factors for Corolicasider Disease</h4>
-
-<h3>Lifestyle</h3>
-<p>The metrics of deal for health ore all jok hond pairs, and get sporgesde energy little physical society and modarace of tubaccii however very few people meet metrics Promotion of a testty lifestyle theughout the remises the most Important way to prevent otheriodericde CVD Related Question</p>
-
-<h2>Extensor Mechanism Injuries</h2>
-
-<h3>Lifestyle</h3>
-<p>Coronaronar as <strong style="background-color: #fef3c7; padding: 2px 4px;">CVD</strong> ns many constricting corony les do CAD discais, rhythro olvendeis subotical oreo laot, valor de sendo dic, and peripheral artery CV msel the leadlip card of death in the United States, however, from 28 to 2016, the egercised death roteif Despite their improvement CHEMOCCRD</p>
-
-<p>CVD was response for early of east in the userener 2016 Gabaly a third of o CHEMOCCRD</p>
-
-<p>Recently 60% E morbic commy liferme mx for CVD earment according to date from the Promingham Heart Study had more than Yr for 2014 to 2015 was CVD was response for 42 million US Hospital discharges in 2014 approav measy 8850 lion, the progdies total cost of CVD between 2015 and 2005 ss estimated to remain multe for most persns int to increase acacly for about ajnul 15 years or older</p>
-
-<p>An estimated d 2 wine utlus sorer than 20 years have a diagnosis of heart falus, a thai common porthway for candiovascular corditions. The prevalance of heart failure is projected to incresso by between 2012 and 2030</p>
-
-<h4>Risk Factors for Corolicasider Disease</h4>
-
-<h3>Lifestyle</h3>
-<p>The metrics of deal for health ore all jok hond pairs, and get sporgesde energy little physical society and modarace of tubaccii however very few people meet metrics Promotion of a testty lifestyle theughout the remises the most Important way to prevent otheriodericde CVD Related Question</p>
-
-<p>Coronaronar as CVD ns many constricting corony les do CAD discais, rhythro olvendeis subotical oreo laot, valor de sendo dic, and peripheral artery CV msel the leadlip card of death in the United States, however, from 28 to 2016, the egercised death roteif Despite their improvement CHEMOCCRD</p>
-`;
+const COLORS = [
+  { name: "Yellow", value: "#fef3c7", border: "#f59e0b" },
+  { name: "Blue", value: "#bfdbfe", border: "#3b82f6" },
+  { name: "Green", value: "#bbf7d0", border: "#10b981" },
+  { name: "Pink", value: "#fbcfe8", border: "#ec4899" },
+  { name: "Purple", value: "#e9d5ff", border: "#a855f7" },
+  { name: "Orange", value: "#ffedd5", border: "#f97316" },
+  { name: "Cyan", value: "#cffafe", border: "#06b6d4" },
+];
 
 const SubLibraryDetails = ({
   libraryId,
   chapterId,
 }: SubLibraryDetailsProps) => {
-  const [highlights, setHighlights] = React.useState<Highlight[]>([]);
-  const [notes, setNotes] = React.useState<Note[]>([]);
-  const [newNote, setNewNote] = React.useState("");
-  const [selectedSection, setSelectedSection] = React.useState("");
-  const [showTOC, setShowTOC] = React.useState(false);
-  const [showLearningPlan, setShowLearningPlan] = React.useState(false);
-  const [showNotesPanel, setShowNotesPanel] = React.useState(false);
-  const [showNotesPage, setShowNotesPage] = React.useState(false);
-  const [isRead, setIsRead] = React.useState(false);
-  const [chapters, setChapters] = React.useState<TOCChapter[]>([
-    { id: "1", title: "Distal It Band Syndrome", isBookmarked: true },
-    { id: "2", title: "Patellar Tendinopathy", isBookmarked: false },
-    { id: "3", title: "Popliteus Tendinopathy", isBookmarked: false },
-    { id: "4", title: "Extensor Mechanism Injuries", isBookmarked: false },
-    { id: "5", title: "Quadriceps Tendon Rupture", isBookmarked: false },
-    { id: "6", title: "Patellar Sleeve Fracture", isBookmarked: false },
-    { id: "7", title: "Epidemiology and Risk Factors", isBookmarked: false },
-    { id: "8", title: "Patellar Tendinopathy", isBookmarked: false },
-  ]);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [showTOC, setShowTOC] = useState(false);
+  const [showLearningPlan, setShowLearningPlan] = useState(false);
+  const [showNotesPanel, setShowNotesPanel] = useState(false);
+  const [showNotesPage, setShowNotesPage] = useState(false);
+  const [newNote, setNewNote] = useState("");
+  const [selectedSection, setSelectedSection] = useState("");
+  const [floatingMenu, setFloatingMenu] = useState<{
+    x: number;
+    y: number;
+    text: string;
+    range: { from: number; to: number };
+  } | null>(null);
 
-  // Keep params for future API integration
-  console.log("Current view:", { libraryId, chapterId });
+  const queryClient = useQueryClient();
+  const { data: libraryData, isLoading: isLibraryLoading } = useLibrary({
+    limit: 100,
+  });
+  const { data: annotationData, isLoading: isAnnotationsLoading } =
+    useAnnotations(libraryId);
+  const saveMutation = useSaveAnnotations(libraryId);
 
-  const contentRef = React.useRef<HTMLDivElement>(null);
-
-  // Simulate API call
-  const saveHighlightToBackend = React.useCallback(
-    async (highlight: Highlight) => {
-      try {
-        // Simulate fetch call
-        console.log("Saving highlight to backend:", highlight);
-        // await fetch('/api/highlights', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify({
-        //     libraryId,
-        //     chapterId,
-        //     highlight
-        //   })
-        // });
-      } catch (error) {
-        console.error("Failed to save highlight:", error);
-      }
-    },
-    [],
+  const article = useMemo(
+    () => (libraryData?.data ?? []).find((a) => a._id === libraryId),
+    [libraryData?.data, libraryId],
   );
 
-  // Handle text selection and highlight
-  const handleTextSelection = React.useCallback(() => {
-    const selection = window.getSelection();
-    if (!selection || selection.isCollapsed) return;
+  // Derive highlights and notes from server data — memoised so deps are stable
+  const highlights = useMemo<AnnotationHighlight[]>(
+    () => annotationData?.highlights ?? [],
+    [annotationData?.highlights],
+  );
+  const notes = useMemo<AnnotationNote[]>(
+    () => annotationData?.notes ?? [],
+    [annotationData?.notes],
+  );
 
-    const selectedText = selection.toString().trim();
-    if (selectedText.length === 0) return;
+  const topic = useMemo(
+    () => article?.topicIds?.find((t) => t._id === chapterId),
+    [article, chapterId],
+  );
 
-    // Create new highlight
-    const timestamp = Date.now();
-    const newHighlight: Highlight = {
-      id: `highlight-${timestamp}`,
-      text: selectedText,
-      color: "#fef3c7",
-      createdAt: new Date(),
-    };
+  const chapters = useMemo(
+    () =>
+      article?.topicIds?.map((t) => ({
+        id: t._id,
+        title: t.Name,
+        isBookmarked: false,
+      })) || [],
+    [article],
+  );
 
-    setHighlights((prev) => [...prev, newHighlight]);
+  const toggleBookmark = (id: string) => {
+    console.log("Toggle bookmark for:", id);
+  };
 
-    // Simulate API call to backend
-    saveHighlightToBackend(newHighlight);
-
-    // Clear selection
-    selection.removeAllRanges();
-  }, [saveHighlightToBackend]);
-
-  // Add note
   const addNote = () => {
-    if (!newNote.trim() || !selectedSection) return;
-
-    const note: Note = {
-      id: `note-${Date.now()}`,
+    if (!newNote.trim()) return;
+    const note: AnnotationNote = {
+      id: `n-${Date.now()}`,
       content: newNote,
-      section: selectedSection,
-      createdAt: new Date(),
     };
-
-    setNotes((prev) => [...prev, note]);
+    saveMutation.mutate(
+      {
+        highlights,
+        notes: [...notes, note],
+      },
+      {
+        onSuccess: () => {
+          toast.success("Note added successfully");
+        },
+        onError: () => {
+          toast.error("Failed to add note");
+        },
+      },
+    );
     setNewNote("");
     setSelectedSection("");
-
-    // Simulate API call
-    console.log("Saving note to backend:", note);
+    setShowNotesPanel(false);
   };
 
-  // Toggle bookmark
-  const toggleBookmark = (id: string) => {
-    setChapters((prev) =>
-      prev.map((ch) =>
-        ch.id === id ? { ...ch, isBookmarked: !ch.isBookmarked } : ch,
-      ),
+  const getSelectionOffsets = (selection: Selection) => {
+    if (!contentRef.current || selection.rangeCount === 0) return null;
+    const range = selection.getRangeAt(0);
+
+    // Safety check: only allow selection within contentRef
+    if (!contentRef.current.contains(range.commonAncestorContainer))
+      return null;
+
+    const preSelectionRange = range.cloneRange();
+    preSelectionRange.selectNodeContents(contentRef.current);
+    preSelectionRange.setEnd(range.startContainer, range.startOffset);
+    const start = preSelectionRange.toString().length;
+    return { from: start, to: start + range.toString().length };
+  };
+
+  const handleTextSelection = () => {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || !contentRef.current) {
+      setFloatingMenu(null);
+      return;
+    }
+
+    const text = selection.toString().trim();
+    if (!text) return;
+
+    const rangeOffsets = getSelectionOffsets(selection);
+    if (!rangeOffsets) return;
+
+    const rect = selection.getRangeAt(0).getBoundingClientRect();
+    setFloatingMenu({
+      x: rect.left + window.scrollX + rect.width / 2,
+      y: rect.top + window.scrollY - 50,
+      text: selection.toString(),
+      range: rangeOffsets,
+    });
+  };
+
+  const handleAddHighlight = (color: string) => {
+    if (!floatingMenu) return;
+
+    const newHighlight: AnnotationHighlight = {
+      id: chapterId,
+      text: floatingMenu.text,
+      range: floatingMenu.range,
+      color,
+    };
+
+    const updatedHighlights = [...highlights, newHighlight];
+
+    // Optimistically update the query cache for immediate feedback
+    queryClient.setQueryData(
+      ["article-annotations", libraryId],
+      (prev: typeof annotationData) => ({
+        ...(prev ?? {}),
+        highlights: updatedHighlights,
+        notes: notes,
+      }),
     );
+
+    saveMutation.mutate(
+      { highlights: updatedHighlights, notes },
+      {
+        onSuccess: () => {
+          toast.success("Highlight saved");
+        },
+        onError: () => {
+          toast.error("Failed to save highlight");
+        },
+      },
+    );
+    setFloatingMenu(null);
+    window.getSelection()?.removeAllRanges();
   };
 
-  // If notes page is open, show full notes view
+  const processedDescription = useMemo(() => {
+    if (!topic?.Description) return "No description available.";
+    const chapterHighlights = highlights.filter((h) => h.id === chapterId);
+    if (!chapterHighlights.length) return topic.Description;
+
+    let html = topic.Description;
+    const uniqueTexts = Array.from(
+      new Set(chapterHighlights.map((h) => h.text)),
+    );
+
+    uniqueTexts.forEach((textToHighlight) => {
+      const highlight = chapterHighlights.find(
+        (h) => h.text === textToHighlight,
+      );
+      if (!highlight) return;
+      const escapedText = textToHighlight.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&",
+      );
+      const regex = new RegExp(`(${escapedText})`, "g");
+      html = html.replace(
+        regex,
+        `<span style="background-color: ${highlight.color} !important; box-shadow: 0 0 0 1px rgba(0,0,0,0.05); border-radius: 4px; padding: 0 2px;">$1</span>`,
+      );
+    });
+
+    return html;
+  }, [topic, highlights, chapterId]);
+
+  if (isLibraryLoading || isAnnotationsLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-emerald-600" />
+      </div>
+    );
+  }
+
+  if (!article || !topic) {
+    return (
+      <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+        <h2 className="text-xl font-bold">Topic not found</h2>
+        <Link
+          href={`/library/${libraryId}`}
+          className="mt-4 text-emerald-600 hover:underline"
+        >
+          Return to Table of Contents
+        </Link>
+      </div>
+    );
+  }
+
   if (showNotesPage) {
     return (
       <Notes
-        notes={notes}
+        notes={notes.map((n) => ({
+          id: n.id,
+          content: n.content,
+          section: "General",
+          createdAt: new Date(),
+        }))}
         onBack={() => setShowNotesPage(false)}
-        title="Knee"
-        subtitle="Distal It Band Syndrome"
+        title={article.name}
+        subtitle={topic.Name}
       />
     );
   }
 
   return (
-    <div className="w-full ">
-      {/* Main Content Area */}
-      <div className="relative rounded-2xl border border-slate-200/80 bg-white dark:border-slate-700 dark:bg-slate-900">
-        {/* Top-Right Action Buttons */}
-        <div className="absolute top-4 right-4 z-10 flex gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setShowTOC(false);
-              setShowLearningPlan(false);
-              setShowNotesPanel(!showNotesPanel);
-            }}
-            className={`flex h-10 w-10 items-center justify-center rounded-lg border transition ${
-              showNotesPanel
-                ? "border-emerald-600 bg-emerald-600 text-white shadow-lg"
-                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
-            }`}
-            title="Notes"
-          >
-            <Edit3 size={16} />
-          </button>
+    <div className="w-full">
+      <div className="relative overflow-visible rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">
+          {article?.topicIds?.[0]?.Primary_Body_Region}
+        </h2>
 
-          <button
-            type="button"
-            onClick={() => {
-              setShowTOC(false);
-              setShowNotesPanel(false);
-              setShowLearningPlan(!showLearningPlan);
+        {/* Floating Highlight Menu */}
+        {floatingMenu && (
+          <div
+            className="fixed z-50 flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 shadow-2xl ring-1 ring-white/10 animate-in fade-in zoom-in duration-200"
+            style={{
+              left: `${floatingMenu.x}px`,
+              top: `${floatingMenu.y}px`,
+              transform: "translateX(-50%)",
             }}
-            className={`flex h-10 w-10 items-center justify-center rounded-lg border transition ${
-              showLearningPlan
-                ? "border-emerald-600 bg-emerald-600 text-white shadow-lg"
-                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
-            }`}
-            title="Learning Plan"
           >
-            <ClipboardList size={16} />
-          </button>
+            <div className="flex items-center gap-2">
+              {COLORS.map((c) => (
+                <button
+                  key={c.value}
+                  onClick={() => handleAddHighlight(c.value)}
+                  className="h-7 w-7 rounded-full border border-white/20 transition hover:scale-125 active:scale-95"
+                  style={{ backgroundColor: c.value, borderColor: c.border }}
+                  title={c.name}
+                />
+              ))}
+              <div className="mx-1 h-6 w-px bg-white/20" />
+              <button
+                onClick={() => setFloatingMenu(null)}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            {/* Tooltip arrow */}
+            <div className="absolute -bottom-2 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 bg-slate-900" />
+          </div>
+        )}
 
-          <button
-            type="button"
-            onClick={() => {
-              setShowNotesPanel(false);
-              setShowLearningPlan(false);
-              setShowTOC(!showTOC);
-            }}
-            className={`flex h-10 w-10 items-center justify-center rounded-lg border transition ${
-              showTOC
-                ? "border-emerald-600 bg-emerald-600 text-white shadow-lg"
-                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
-            }`}
-            title="Table of Contents"
+        <nav className="flex items-center gap-1.5 text-xs font-bold mb-8">
+          <Link
+            href="/library"
+            className="text-[#007b5e] hover:underline uppercase"
           >
-            <BookOpen size={16} />
-          </button>
+            Text
+          </Link>
+          <span className="text-slate-400">›</span>
+          <span className="text-[#007b5e] uppercase">
+            {topic.Primary_Body_Region}
+          </span>
+          <span className="text-slate-400">›</span>
+          <Link
+            href={`/library/${libraryId}`}
+            className="text-[#007b5e] hover:underline uppercase"
+          >
+            {article.name}
+          </Link>
+          <span className="text-slate-400">›</span>
+          <span className="text-slate-600 dark:text-slate-300 uppercase truncate max-w-[200px]">
+            {topic.Name}
+          </span>
+        </nav>
+
+        <div className="relative flex flex-col lg:flex-row gap-8">
+          <div className="grow">
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-6">
+              {topic.Name}
+            </h2>
+
+            <div
+              ref={contentRef}
+              onMouseUp={handleTextSelection}
+              className="prose prose-sm max-w-none text-slate-700 dark:text-slate-300 dark:prose-invert
+                prose-headings:text-slate-900 dark:prose-headings:text-white
+                prose-h3:text-xl prose-h3:font-bold prose-h3:mt-8
+                prose-p:leading-relaxed prose-p:mb-4
+                selection:bg-emerald-100 dark:selection:bg-emerald-900/40"
+              dangerouslySetInnerHTML={{
+                __html: processedDescription,
+              }}
+            />
+          </div>
+
+          <div className="flex lg:flex-col gap-px h-fit rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden dark:border-slate-700 dark:bg-slate-800 sticky top-4">
+            <button
+              onClick={() => {
+                setShowTOC(!showTOC);
+                setShowLearningPlan(false);
+                setShowNotesPanel(false);
+              }}
+              className={`flex flex-col items-center justify-center p-3 transition hover:bg-slate-50 dark:hover:bg-slate-700 ${showTOC ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20" : "text-slate-600 dark:text-slate-400"}`}
+              title="Table of Contents"
+            >
+              <BookOpen size={20} />
+              <span className="text-[9px] font-bold mt-1">TOC</span>
+            </button>
+            <button
+              onClick={() => {
+                setShowLearningPlan(!showLearningPlan);
+                setShowTOC(false);
+                setShowNotesPanel(false);
+              }}
+              className={`flex flex-col items-center justify-center p-3 border-t lg:border-t lg:border-l-0 border-l border-slate-100 dark:border-slate-700 transition hover:bg-slate-50 dark:hover:bg-slate-700 ${showLearningPlan ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20" : "text-slate-600 dark:text-slate-400"}`}
+              title="Learning Plan"
+            >
+              <ClipboardList size={20} />
+              <span className="text-[9px] font-bold mt-1 line-clamp-1">
+                Learning Plan
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                setShowNotesPanel(!showNotesPanel);
+                setShowTOC(false);
+                setShowLearningPlan(false);
+              }}
+              className={`flex flex-col items-center justify-center p-3 border-t lg:border-t lg:border-l-0 border-l border-slate-100 dark:border-slate-700 transition hover:bg-slate-50 dark:hover:bg-slate-700 ${showNotesPanel ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20" : "text-slate-600 dark:text-slate-400"}`}
+              title="Notes"
+            >
+              <Edit3 size={20} />
+              <span className="text-[9px] font-bold mt-1">Notes</span>
+            </button>
+          </div>
         </div>
 
-        {/* Modal Overlays */}
         {(showTOC || showLearningPlan || showNotesPanel) && (
-          <div className="absolute inset-x-4 top-16 z-20 max-h-[500px] overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900 sm:inset-x-8">
+          <div className="absolute inset-x-6 top-48 z-50 max-h-[600px] overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
             {showNotesPanel && (
               <NotesPanel
                 newNote={newNote}
@@ -260,15 +395,13 @@ const SubLibraryDetails = ({
                 onClose={() => setShowNotesPanel(false)}
               />
             )}
-
             {showLearningPlan && (
               <LearningPlanPanel
-                isRead={isRead}
-                setIsRead={setIsRead}
+                libraryId={libraryId}
+                chapterId={chapterId}
                 onClose={() => setShowLearningPlan(false)}
               />
             )}
-
             {showTOC && (
               <TocPanel
                 chapters={chapters}
@@ -278,68 +411,48 @@ const SubLibraryDetails = ({
             )}
           </div>
         )}
-
-        {/* Content with HTML rendering */}
-        <div
-          ref={contentRef}
-          onMouseUp={handleTextSelection}
-          className="prose prose-sm max-w-none px-4 pb-6 pt-20 sm:px-6 lg:px-8 dark:prose-invert prose-headings:text-slate-900 prose-p:text-slate-700 dark:prose-headings:text-slate-100 dark:prose-p:text-slate-300"
-          dangerouslySetInnerHTML={{ __html: demoContent }}
-        />
       </div>
 
-      {/* Bottom Sections: Text Notes and Highlights */}
-      <div className="mt-6">
-        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
+      <div className="mt-12">
+        <h2 className="mb-6 text-2xl font-bold text-slate-900 dark:text-white">
           Text Notes and Highlights:
         </h2>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Notes Card */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
-            <div className="mb-3 flex items-center gap-2">
-              <Edit3 size={18} className="text-slate-700 dark:text-slate-300" />
-              <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-8 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
+            <div className="mb-4 flex items-center justify-center lg:justify-start gap-3">
+              <Edit3 size={28} className="text-slate-900 dark:text-white" />
+              <h3 className="text-3xl font-bold text-slate-900 dark:text-white">
                 Notes
               </h3>
             </div>
-
-            <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
-              Your notes, organized by content type and subsequently
+            <p className="mb-8 text-center lg:text-left text-sm font-medium text-slate-600 dark:text-slate-400">
+              Your notes, organized by content type and subspecialty
             </p>
-
             <button
-              type="button"
               onClick={() => setShowNotesPage(true)}
-              className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+              className="mt-auto flex h-12 items-center justify-center rounded-xl bg-[#007b5e] font-bold text-white transition hover:bg-[#00634b]"
             >
-              {notes.length} {notes.length === 1 ? "Note" : "Notes"}
+              {notes.length} Notes
             </button>
           </div>
 
-          {/* Highlights Card */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
-            <div className="mb-3 flex items-center gap-2">
+          <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-8 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
+            <div className="mb-4 flex items-center justify-center lg:justify-start gap-3">
               <PencilLine
-                size={18}
-                className="text-slate-700 dark:text-slate-300"
+                size={28}
+                className="text-slate-900 dark:text-white"
               />
-              <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+              <h3 className="text-3xl font-bold text-slate-900 dark:text-white">
                 Highlights
               </h3>
             </div>
-
-            <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
+            <p className="mb-8 text-center lg:text-left text-sm font-medium text-slate-600 dark:text-slate-400">
               Content you&apos;ve highlighted, organized by type and
-              subsequently
+              subspecialty
             </p>
-
-            <button
-              type="button"
-              className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
-            >
-              {highlights.length}{" "}
-              {highlights.length === 1 ? "Highlight" : "Highlights"}
+            <button className="mt-auto flex h-12 items-center justify-center rounded-xl bg-[#007b5e] font-bold text-white transition hover:bg-[#00634b]">
+              {highlights.filter((h) => h.id === chapterId).length} Highlights
             </button>
           </div>
         </div>

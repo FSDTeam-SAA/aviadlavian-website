@@ -21,7 +21,7 @@ const NotesPanel = ({
   onClose,
 }: NotesPanelProps) => {
   return (
-    <div className="p-6">
+    <div className="p-6 z-50">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
           Add Note

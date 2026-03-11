@@ -5,6 +5,7 @@ import {
   getInjuryFlashcard,
   getInjuryFlashcardId,
   createFlashcardReview,
+  getFlashcardProgress,
 } from "../api/flashcard";
 
 export const useInjuryFilters = () => {
@@ -45,5 +46,13 @@ export const useInjuryFlashcardId = (id: string) => {
 export const useCreateFlashcardReview = () => {
   return useMutation({
     mutationFn: createFlashcardReview,
+  });
+};
+
+export const useFlashcardProgress = (topicId: string) => {
+  return useQuery({
+    queryKey: ["flashcardProgress", topicId],
+    queryFn: () => getFlashcardProgress(topicId),
+    enabled: !!topicId,
   });
 };

@@ -45,7 +45,7 @@ const menuItems: MenuItem[] = [
   { label: "Flashcards", icon: Sparkles, url: "/flashcards" },
   { label: "Custom Quizzes", icon: BookText, url: "/custom-quizzes" },
   { label: "Settings", icon: Settings, url: "/settings" },
-  { label: "Feedback", icon: MessageSquare },
+  { label: "Feedback", icon: MessageSquare, url: "/feedback" },
 ];
 
 const Sidebar = () => {

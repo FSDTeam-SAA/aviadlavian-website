@@ -31,3 +31,7 @@ export async function createFlashcardReview(data: {
   const res = await api.post(`/flashcard-progress/create-review`, data);
   return res.data;
 }
+export async function getFlashcardProgress(topicId: string) {
+  const res = await api.get(`/flashcard-progress/my-progress/${topicId}`);
+  return res.data;
+}

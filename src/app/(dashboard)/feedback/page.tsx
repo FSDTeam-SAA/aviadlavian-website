@@ -1,7 +1,5 @@
-import React from "react";
+import FeedbackSupportPage from "@/features/feedback/components/FeedbackSupportPage";
 
-const page = () => {
-  return <div>feedback</div>;
-};
-
-export default page;
+export default function Page() {
+  return <FeedbackSupportPage />;
+}

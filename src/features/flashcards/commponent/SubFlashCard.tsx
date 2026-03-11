@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { useAllFlashcards } from "../hooks/useFlashCard";
+import { useAllFlashcards, useFlashcardProgress } from "../hooks/useFlashCard";
 
 type InjuryData = {
   _id: string;
@@ -31,10 +31,12 @@ const SubFlashCard = ({
   chapterTitle = "Chondromalacia Patella",
 }: SubFlashCardProps) => {
   const { data: injuriesData, isLoading } = useAllFlashcards(flashcardId || "");
+  const { data: progressData } = useFlashcardProgress(flashcardId || "");
 
   const injuries: InjuryData[] = injuriesData?.data || [];
-  const completedQuestions = injuries.length;
-  const completedPercent = 81;
+  const completedQuestions = progressData?.data?.totalCount || injuries.length;
+  const completedCount = progressData?.data?.completedCount || 0;
+  const completedPercent = progressData?.data?.completedPercentage || 0;
 
   return (
     <div className="w-full">
