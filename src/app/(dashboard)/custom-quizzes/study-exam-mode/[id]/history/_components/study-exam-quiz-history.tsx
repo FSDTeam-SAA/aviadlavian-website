@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { FileText, ChevronRight, AlertTriangle, X } from "lucide-react";
@@ -64,7 +64,7 @@ const StudyExamQuizHistory = () => {
   const token = session?.data?.accessToken;
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const { data, isLoading, error, refetch } = useQuery<ApiResponse>({
+  const { data, isLoading, error } = useQuery<ApiResponse>({
     queryKey: ["studyExamResult", id],
     queryFn: async () => {
       const res = await fetch(
