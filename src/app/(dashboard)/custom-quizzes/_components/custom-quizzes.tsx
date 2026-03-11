@@ -24,14 +24,17 @@ import {
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import CreateCustomQuiz from "./create-custom-quizzes";
 
-interface Injury {
-  _id: string;
-  Primary_Body_Region: string;
-}
-
-interface ApiResponse {
-  data: Injury[];
+interface FilterOptionsResponse {
+  message: string;
+  statusCode: number;
+  status: string;
+  data: {
+    bodyRegions: string[];
+    acuityValues: string[];
+    importanceLevels: string[];
+  };
 }
 
 const CustomQuizzes = () => {
@@ -41,21 +44,26 @@ const CustomQuizzes = () => {
 
   const [step, setStep] = useState(1);
   const [isOpen, setIsOpen] = useState(false);
-
+  const [showCreateFlow, setShowCreateFlow] = useState(false);
   const [examName, setExamName] = useState("");
   const [selectedTopic, setSelectedTopic] = useState("");
 
-  const { data, isLoading } = useQuery<ApiResponse>({
-    queryKey: ["injuries"],
+  // Updated query for filter-options
+  const { data, isLoading } = useQuery<FilterOptionsResponse>({
+    queryKey: ["filter-options"],
     queryFn: async () => {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/injury/get-all`,
+        `${process.env.NEXT_PUBLIC_API_URL}/injury/filter-options`,
       );
-      if (!response.ok) throw new Error("Failed to fetch injuries");
+      if (!response.ok) throw new Error("Failed to fetch filter options");
       return response.json();
     },
-    enabled: isOpen,
   });
+
+  // Extract body regions from response
+  const bodyRegions = useMemo(() => {
+    return data?.data?.bodyRegions || [];
+  }, [data]);
 
   // Start Exam Mutation
   const mutation = useMutation({
@@ -89,13 +97,6 @@ const CustomQuizzes = () => {
       toast.error(error.message);
     },
   });
-
-  // Unique regions filter
-  const uniqueTopics = useMemo(() => {
-    if (!data?.data) return [];
-    const regions = data.data.map((item) => item.Primary_Body_Region);
-    return Array.from(new Set(regions));
-  }, [data]);
 
   const handleConfirm = () => {
     const defaultDate = new Date().toLocaleDateString("en-GB");
@@ -235,7 +236,7 @@ const CustomQuizzes = () => {
                               <SelectValue placeholder="Select Topic" />
                             </SelectTrigger>
                             <SelectContent>
-                              {uniqueTopics.map((region) => (
+                              {bodyRegions.map((region) => (
                                 <SelectItem key={region} value={region}>
                                   {region}
                                 </SelectItem>
@@ -272,10 +273,23 @@ const CustomQuizzes = () => {
             Create custom quizzes based on specific body regions or difficulty
             levels.
           </p>
-          <Button className="bg-[#0e308d] hover:bg-[#0a246b]">
+          <Button
+            onClick={() => setShowCreateFlow(true)}
+            className="bg-[#0e308d] hover:bg-[#0a246b] hover:cursor-pointer"
+          >
             Create New Quiz
           </Button>
         </div>
+      </div>
+
+      <div>
+        {showCreateFlow && (
+          <CreateCustomQuiz
+            topics={bodyRegions}
+            token={token}
+            onBack={() => setShowCreateFlow(false)}
+          />
+        )}
       </div>
     </div>
   );
