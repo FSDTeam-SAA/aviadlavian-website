@@ -1,30 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
-import {
-  BookMarked,
-  EllipsisVertical,
-  FilePenLine,
-  Menu,
-  NotebookText,
-  Search,
-  Settings,
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import React from "react";
+import { useRouter } from "next/navigation";
+import { Menu, Search } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import DisplaySetting from "@/features/sample-feature/header/DisplaySetting";
 import { useUIStore } from "@/store/ui.store";
+import { useMyProfile } from "../hooks/useSample";
 
 const Header = () => {
-  const [isDisplaySettingsOpen, setIsDisplaySettingsOpen] = useState(false);
+  const router = useRouter();
   const openSidebar = useUIStore((state) => state.openSidebar);
+  const { data: profile } = useMyProfile();
+
+  const fullName = [profile?.FirstName, profile?.LastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  const initials = `${profile?.FirstName?.[0] ?? "A"}${profile?.LastName?.[0] ?? "L"}`;
 
   return (
     <>
@@ -60,74 +53,22 @@ const Header = () => {
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
-              className="inline-flex items-center justify-center rounded-md p-2 text-white transition hover:bg-white/15"
-              aria-label="More"
+              onClick={() => router.push("/settings")}
+              className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-white transition hover:bg-white/15"
+              aria-label="Go to settings page"
             >
-              <EllipsisVertical size={18} />
+              <span className="hidden text-xl font-medium text-white sm:inline">
+                {fullName || "Aviad Lavian"}
+              </span>
+              <Avatar className="h-9 w-9 border-2 border-white/70">
+                <AvatarFallback className="bg-slate-200 text-xs font-semibold text-slate-700">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
             </button>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-white transition hover:bg-white/15"
-                  aria-label="Open profile menu"
-                >
-                  <span className="hidden text-xl font-medium text-white sm:inline">
-                    Aviad Lavian
-                  </span>
-                  <Avatar className="h-9 w-9 border-2 border-white/70">
-                    <AvatarFallback className="bg-slate-200 text-xs font-semibold text-slate-700">
-                      AL
-                    </AvatarFallback>
-                  </Avatar>
-                </button>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent
-                align="end"
-                className="mt-2 w-60 rounded-xl border border-slate-200 bg-white p-1.5 text-slate-800 shadow-xl"
-              >
-                <DropdownMenuItem className="gap-2.5 rounded-md px-3 py-2">
-                  <FilePenLine size={16} />
-                  Table of Contents
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="gap-2.5 rounded-md px-3 py-2">
-                  <BookMarked size={16} />
-                  Learning Plan
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="gap-2.5 rounded-md px-3 py-2">
-                  <NotebookText size={16} />
-                  Notes
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="gap-2.5 rounded-md px-3 py-2"
-                  onSelect={() => setIsDisplaySettingsOpen(true)}
-                >
-                  <Settings size={16} />
-                  Display Settings
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
       </header>
-
-      <Dialog
-        open={isDisplaySettingsOpen}
-        onOpenChange={setIsDisplaySettingsOpen}
-      >
-        <DialogContent
-          showCloseButton={false}
-          className="max-w-xl overflow-hidden rounded-xl border border-slate-200 p-0"
-        >
-          <div className="h-1 w-full bg-[#0f3b97]" />
-          <DisplaySetting />
-        </DialogContent>
-      </Dialog>
     </>
   );
 };
