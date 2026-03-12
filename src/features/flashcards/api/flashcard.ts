@@ -1,4 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { api } from "@/lib/api";
+
+export type FlashcardResponse = {
+  message: string;
+  statusCode: number;
+  status: string;
+  data: any;
+};
 
 export async function getinjuryFilterOptions() {
   const res = await api.get(`/injury/filter-options/`);
@@ -27,8 +35,11 @@ export async function createFlashcardReview(data: {
   flashcardId: string;
   result: string;
   customInterval: string;
-}) {
-  const res = await api.post(`/flashcard-progress/create-review`, data);
+}): Promise<FlashcardResponse> {
+  const res = await api.post<FlashcardResponse>(
+    `/flashcard-progress/create-review`,
+    data,
+  );
   return res.data;
 }
 export async function getFlashcardProgress(topicId: string) {

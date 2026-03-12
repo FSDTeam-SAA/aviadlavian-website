@@ -5,3 +5,11 @@ export interface SampleItem {
   name: string;
   createdAt: string;
 }
+
+export interface UserProfile {
+  _id: string;
+  FirstName: string;
+  LastName: string;
+  email: string;
+  status: string;
+}

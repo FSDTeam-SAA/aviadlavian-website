@@ -2,12 +2,17 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   useInjuryFlashcardId,
   useCreateFlashcardReview,
 } from "../hooks/useFlashCard";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import {
+  useLearningPlans,
+  useAddFlashcardToLearningPlan,
+} from "@/features/library/hooks/uselibrary";
 
 type FlashCardDetailsProps = {
   subspecialty?: string;
@@ -16,12 +21,23 @@ type FlashCardDetailsProps = {
   flashcardId?: string;
 };
 
+const INTERVAL_OPTIONS = [
+  { label: "5 min", value: "5m" },
+  { label: "1 hour", value: "1h" },
+  { label: "2 days", value: "2d" },
+  { label: "7 days", value: "7d" },
+  { label: "15 days", value: "15d" },
+  { label: "30 days", value: "30d" },
+  { label: "1 month", value: "1mon" },
+];
+
 const FlashCardDetails = ({
   subspecialty = "Knee",
   chapter = "Chondromalacia Patella",
   lastid,
   flashcardId,
 }: FlashCardDetailsProps) => {
+  const router = useRouter();
   const [isAnswerRevealed, setIsAnswerRevealed] = useState(false);
   const [confidenceRating, setConfidenceRating] = useState<string | null>(null);
   const [customInterval, setCustomInterval] = useState("");
@@ -29,8 +45,41 @@ const FlashCardDetails = ({
   const { data: flashdata } = useInjuryFlashcardId(lastid || "");
   const createReviewMutation = useCreateFlashcardReview();
 
+  const { data: learningPlans } = useLearningPlans();
+  const addFlashcardToPlanMutation = useAddFlashcardToLearningPlan();
+
+  const handleAddToLearningPlan = () => {
+    const activePlan =
+      learningPlans?.find((p) => p.isActive) || learningPlans?.[0];
+
+    if (!activePlan) {
+      toast.error("No active learning plan found");
+      return;
+    }
+
+    if (!lastid) return;
+
+    addFlashcardToPlanMutation.mutate(
+      {
+        learningPlanId: activePlan._id,
+        flashcardId: lastid,
+      },
+      {
+        onSuccess: (data) => {
+          toast.success(data?.message || "Added to learning plan successfully");
+        },
+        onError: (err) => {
+          toast.error(err?.message || "Failed to add to learning plan");
+        },
+      },
+    );
+  };
+
   const handleSubmitReview = () => {
-    if (!lastid || !confidenceRating || !customInterval) return;
+    if (!lastid || !confidenceRating || !customInterval) {
+      toast.error("Please select rating and interval before submitting");
+      return;
+    }
 
     const resultMap: Record<string, string> = {
       correct: "correct",
@@ -38,11 +87,25 @@ const FlashCardDetails = ({
       unknown: "unknown",
     };
 
-    createReviewMutation.mutate({
-      flashcardId: lastid,
-      result: resultMap[confidenceRating] || "wrong",
-      customInterval: customInterval,
-    });
+    createReviewMutation.mutate(
+      {
+        flashcardId: lastid,
+        result: resultMap[confidenceRating] || "wrong",
+        customInterval: customInterval,
+      },
+      {
+        onSuccess: (data) => {
+          toast.success(data?.message || "Review saved successfully");
+          setCustomInterval("");
+          setConfidenceRating(null);
+          setIsAnswerRevealed(false);
+          router.back();
+        },
+        onError: (err) => {
+          toast.error(err?.message || "Failed to save review");
+        },
+      },
+    );
   };
 
   const question = flashdata?.data?.question || "Loading...";
@@ -89,9 +152,20 @@ const FlashCardDetails = ({
 
         {/* Main Content */}
         <div className="mt-8  max-w-3xl">
-          <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 dark:text-slate-100">
-            Current Flashcard
-          </h2>
+          <div className="flex items-center justify-between ">
+            <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 dark:text-slate-100">
+              Current Flashcard
+            </h2>
+            <Button
+              onClick={handleAddToLearningPlan}
+              disabled={addFlashcardToPlanMutation.isPending}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              {addFlashcardToPlanMutation.isPending
+                ? "Adding..."
+                : "Add to learning plan"}
+            </Button>
+          </div>
 
           {/* Question and Answer Card */}
           <div className="mt-4 overflow-hidden rounded-2xl border border-orange-200 shadow-sm dark:border-orange-900/30">
@@ -173,7 +247,7 @@ const FlashCardDetails = ({
                 </button>
               </div>
 
-              <div className="mt-8 flex flex-col sm:flex-row items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <div className="mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
                 <div className="grow text-center sm:text-left">
                   <p className="text-sm font-bold text-slate-900 dark:text-white">
                     Repetitions
@@ -182,14 +256,36 @@ const FlashCardDetails = ({
                     How many times have you seen this before?
                   </p>
                 </div>
-                <div className="flex w-full sm:w-auto gap-2">
-                  <Input
-                    type="text"
-                    placeholder="e.g., 2m, 1h, 3d"
-                    value={customInterval}
-                    onChange={(e) => setCustomInterval(e.target.value)}
-                    className="bg-white dark:bg-slate-900"
-                  />
+                <div className="flex w-full flex-col sm:flex-row sm:items-end gap-3">
+                  <div className="w-full sm:min-w-[360px]">
+                    <div className="relative px-2 pt-2">
+                      <div className="absolute top-1/2 left-2 right-2 h-px -translate-y-1/2 bg-slate-300 dark:bg-slate-600" />
+                      <div className="relative flex items-center justify-between">
+                        {INTERVAL_OPTIONS.map((option) => {
+                          const isSelected = customInterval === option.value;
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              title={option.label}
+                              onClick={() => setCustomInterval(option.value)}
+                              aria-label={`Set next check-in to ${option.label}`}
+                              className={`h-3 w-3 rounded-full border transition-all ${
+                                isSelected
+                                  ? "border-slate-700 bg-slate-700 shadow-sm dark:border-slate-200 dark:bg-slate-200"
+                                  : "border-slate-300 bg-white hover:border-slate-500 dark:border-slate-500 dark:bg-slate-800"
+                              }`}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <p className="mt-2 text-left sm:text-right text-xs text-slate-500 dark:text-slate-400">
+                      {customInterval
+                        ? `${INTERVAL_OPTIONS.find((o) => o.value === customInterval)?.label} until next check-in`
+                        : "Select next check-in time"}
+                    </p>
+                  </div>
                   <Button
                     onClick={handleSubmitReview}
                     disabled={
