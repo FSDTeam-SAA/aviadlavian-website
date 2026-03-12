@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { api } from "@/lib/api";
 
 export type FlashcardResponse = {
   message: string;
   statusCode: number;
   status: string;
-  data: any;
+  data: unknown;
 };
 
 export async function getinjuryFilterOptions() {

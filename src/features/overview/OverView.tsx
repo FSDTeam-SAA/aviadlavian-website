@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import Link from "next/link";
 import {
@@ -9,11 +10,12 @@ import {
   Zap,
   Clock3,
   CircleDashed,
-  Microscope,
   Coffee,
   PencilLine,
   Highlighter,
 } from "lucide-react";
+
+import { useOverviewProgress } from "./hooks/useOverview";
 
 const topCards = [
   {
@@ -54,42 +56,36 @@ const topCards = [
   },
 ];
 
-const progressCards = [
-  {
-    label: "Study Sessions",
-    value: "42",
-    icon: Clock3,
-    color: "text-orange-500",
-    bg: "bg-orange-50",
-    border: "border-orange-200",
-  },
-  {
-    label: "Total Questions",
-    value: "2,457",
-    icon: CircleDashed,
-    color: "text-blue-500",
-    bg: "bg-blue-50",
-    border: "border-blue-200",
-  },
-  {
-    label: "Pathology Conditions",
-    value: "278",
-    icon: Microscope,
-    color: "text-emerald-500",
-    bg: "bg-emerald-50",
-    border: "border-emerald-200",
-  },
-  {
-    label: "Flashcards",
-    value: "1351",
-    icon: Coffee,
-    color: "text-violet-500",
-    bg: "bg-violet-50",
-    border: "border-violet-200",
-  },
-];
-
 const OverView = () => {
+  const { data: progressRes, isLoading } = useOverviewProgress();
+  const progressData = progressRes?.data;
+
+  const progressCards = [
+    {
+      label: "Total Quizzes",
+      value: progressData?.totalQuiz?.toString() || "0",
+      icon: Clock3,
+      color: "text-orange-500",
+      bg: "bg-orange-50",
+      border: "border-orange-200",
+    },
+    {
+      label: "Total Questions",
+      value: progressData?.totalQuestions?.toString() || "0",
+      icon: CircleDashed,
+      color: "text-blue-500",
+      bg: "bg-blue-50",
+      border: "border-blue-200",
+    },
+    {
+      label: "Flashcards",
+      value: progressData?.totalFlashcards?.toString() || "0",
+      icon: Coffee,
+      color: "text-violet-500",
+      bg: "bg-violet-50",
+      border: "border-violet-200",
+    },
+  ];
   return (
     <section className="w-full transition-colors dark:text-slate-100">
       <div className="mx-auto space-y-6">
@@ -124,7 +120,7 @@ const OverView = () => {
           <h3 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
             See Your Progress
           </h3>
-          <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {progressCards.map((item) => {
               const Icon = item.icon;
 
@@ -170,7 +166,7 @@ const OverView = () => {
                   Your notes, organized by content type and subspecialty
                 </p>
                 <div className="mt-4 rounded-lg bg-[#0f3b97] px-4 py-1 text-center text-lg font-semibold text-white">
-                  3 Notes
+                  {progressData?.totalNotes || 0} Notes
                 </div>
               </article>
             </Link>
@@ -186,7 +182,7 @@ const OverView = () => {
                   subspecialty
                 </p>
                 <div className="mt-4 rounded-lg bg-[#0f3b97] px-4 py-1 text-center text-lg font-semibold text-white">
-                  162 Highlights
+                  {progressData?.totalHighlights || 0} Highlights
                 </div>
               </article>
             </Link>
