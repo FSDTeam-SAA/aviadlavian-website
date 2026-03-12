@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useMemo } from "react";
@@ -6,7 +5,32 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, Circle } from "lucide-react";
 import { useLibrary } from "../hooks/uselibrary";
-import { LibraryArticle } from "../type/library";
+import { LibraryArticle, LibraryTopic } from "../type/library";
+import { useAnnotations } from "@/features/learningplan/hooks/useLearningPlan";
+import { Edit3, PencilLine } from "lucide-react";
+
+const AnnotationCounts = ({ articleId }: { articleId: string }) => {
+  const { data } = useAnnotations(articleId);
+  const notesCount = data?.data?.notes?.length || 0;
+  const highlightsCount = data?.data?.highlights?.length || 0;
+
+  if (notesCount === 0 && highlightsCount === 0) return null;
+
+  return (
+    <div className="flex items-center gap-2">
+      {notesCount > 0 && (
+        <span className="flex items-center gap-1 text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 font-bold">
+          <Edit3 size={10} /> {notesCount}
+        </span>
+      )}
+      {highlightsCount > 0 && (
+        <span className="flex items-center gap-1 text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 font-bold">
+          <PencilLine size={10} /> {highlightsCount}
+        </span>
+      )}
+    </div>
+  );
+};
 
 const Library = () => {
   const { data, isLoading, isError, error } = useLibrary({
@@ -27,8 +51,10 @@ const Library = () => {
   // Group topics by their actual Primary_Body_Region across all articles
   const { groupedData, regions } = useMemo(() => {
     const allArticles = data?.data ?? [];
-    const groups: Record<string, { article: LibraryArticle; topic: any }[]> =
-      {};
+    const groups: Record<
+      string,
+      { article: LibraryArticle; topic: LibraryTopic }[]
+    > = {};
 
     allArticles.forEach((article) => {
       article.topicIds?.forEach((topic) => {
@@ -157,10 +183,13 @@ const Library = () => {
                             {item.topic.Name}
                           </span>
                         </div>
-                        <ChevronRight
-                          size={16}
-                          className="text-slate-400 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1"
-                        />
+                        <div className="flex items-center gap-3">
+                          <AnnotationCounts articleId={item.article._id} />
+                          <ChevronRight
+                            size={16}
+                            className="text-slate-400 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1"
+                          />
+                        </div>
                       </Link>
                     ))}
                   </div>
@@ -172,13 +201,13 @@ const Library = () => {
       </div>
 
       {/* Text Notes and Highlights Section */}
-      {/* <div className="mt-16">
+      <div className="mt-16">
         <h2 className="mb-6 text-2xl font-bold text-slate-900 dark:text-white">
           Text Notes and Highlights:
         </h2>
 
         <div className="grid gap-6 sm:grid-cols-2">
-        
+          {/* Notes Card */}
           <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-8 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
             <div className="mb-4 flex items-center justify-center lg:justify-start gap-3">
               <Edit3 size={28} className="text-slate-900 dark:text-white" />
@@ -189,12 +218,15 @@ const Library = () => {
             <p className="mb-8 text-center lg:text-left text-sm font-medium text-slate-600 dark:text-slate-400">
               Your notes, organized by content type and subspecialty
             </p>
-            <button className="mt-auto flex h-12 items-center justify-center rounded-xl bg-[#007b5e] font-bold text-white transition hover:bg-[#00634b]">
-              0 Notes
-            </button>
+            <Link
+              href="/learningplan"
+              className="mt-auto flex h-12 items-center justify-center rounded-xl bg-[#007b5e] font-bold text-white transition hover:bg-[#00634b]"
+            >
+              View in Learning Plan
+            </Link>
           </div>
 
-        
+          {/* Highlights Card */}
           <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-8 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
             <div className="mb-4 flex items-center justify-center lg:justify-start gap-3">
               <PencilLine
@@ -209,12 +241,15 @@ const Library = () => {
               Content you&apos;ve highlighted, organized by type and
               subspecialty
             </p>
-            <button className="mt-auto flex h-12 items-center justify-center rounded-xl bg-[#007b5e] font-bold text-white transition hover:bg-[#00634b]">
-              1 Highlights
-            </button>
+            <Link
+              href="/learningplan"
+              className="mt-auto flex h-12 items-center justify-center rounded-xl bg-[#007b5e] font-bold text-white transition hover:bg-[#00634b]"
+            >
+              View in Learning Plan
+            </Link>
           </div>
         </div>
-      </div> */}
+      </div>
     </div>
   );
 };

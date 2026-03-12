@@ -6,6 +6,7 @@ import {
   ProgressInfo,
   PopulatedFlashcard,
   PopulatedArticle,
+  PopulatedQuiz,
 } from "../types/learningplan.types";
 
 // ── Calculate progress helper ──
@@ -33,6 +34,18 @@ export function extractTopics(plans: LearningPlan[]): Topic[] {
     // From articles
     for (const art of plan.articles) {
       const topicIds = art.articleId?.topicIds;
+      if (Array.isArray(topicIds)) {
+        for (const topic of topicIds) {
+          if (topic?._id) {
+            topicMap.set(topic._id, topic);
+          }
+        }
+      }
+    }
+
+    // From quizzes
+    for (const q of plan.quizzes || []) {
+      const topicIds = q.quizId?.topicIds;
       if (Array.isArray(topicIds)) {
         for (const topic of topicIds) {
           if (topic?._id) {
@@ -87,7 +100,12 @@ export function getTopicProgress(
       for (const fc of plan.flashcards) {
         if (fc.flashcardId?.topicId?._id === topic._id) {
           fcTotal++;
-          if (fc.isAnswered === "answered") fcAnswered++;
+          if (
+            fc.isAnswered === "answered" ||
+            fc.isAnswered === "correct" ||
+            fc.isAnswered === "incorrect"
+          )
+            fcAnswered++;
         }
       }
     }
@@ -108,11 +126,31 @@ export function getTopicProgress(
       }
     }
 
+    // MCQ progress for this topic
+    let mcqAnswered = 0;
+    let mcqTotal = 0;
+    for (const plan of plans) {
+      for (const q of plan.quizzes || []) {
+        const topicIds = q.quizId?.topicIds;
+        if (
+          Array.isArray(topicIds) &&
+          topicIds.some((t) => t._id === topic._id)
+        ) {
+          mcqTotal++;
+          if (
+            (q.quizId.totalAttempts || 0) > 0 ||
+            q.isAnswered !== "unanswered"
+          )
+            mcqAnswered++;
+        }
+      }
+    }
+
     return {
       topic,
       flashcards: calculateProgress(fcAnswered, fcTotal),
       articles: calculateProgress(artRead, artTotal),
-      mcqs: calculateProgress(0, 0), // MCQ API not yet available
+      mcqs: calculateProgress(mcqAnswered, mcqTotal),
     };
   });
 }
@@ -137,7 +175,7 @@ export function getTopicFlashcards(
   for (const plan of plans) {
     for (const fc of plan.flashcards) {
       if (fc.flashcardId?.topicId?._id === topicId) {
-        flashcards.push(fc);
+        flashcards.push({ ...fc, planId: plan._id });
       }
     }
   }
@@ -173,11 +211,37 @@ export function groupArticlesBySecondaryRegion(
 
         // Avoid pushing exact duplicate articles
         if (!grouped[secondaryRegion].some((a) => a._id === art._id)) {
-          grouped[secondaryRegion].push(art);
+          grouped[secondaryRegion].push({ ...art, planId: plan._id });
         }
       }
     }
   }
 
   return grouped;
+}
+
+// ── Get quizzes for a specific topic ──
+export function getTopicQuizzes(plans: LearningPlan[], topicId: string) {
+  const quizzes: PopulatedQuiz[] = [];
+  for (const plan of plans) {
+    for (const q of plan.quizzes || []) {
+      const topicIds = q.quizId?.topicIds;
+      if (Array.isArray(topicIds) && topicIds.some((t) => t._id === topicId)) {
+        quizzes.push({ ...q, planId: plan._id });
+      }
+    }
+  }
+  return quizzes;
+}
+
+export function getTopicArticles(plans: LearningPlan[], topicId: string) {
+  const articles: PopulatedArticle[] = [];
+  for (const plan of plans) {
+    for (const art of plan.articles) {
+      if (art.articleId?.topicIds?.some((t) => t._id === topicId)) {
+        articles.push({ ...art, planId: plan._id });
+      }
+    }
+  }
+  return articles;
 }
