@@ -2,11 +2,13 @@
 
 import React from "react";
 import { X, Bookmark } from "lucide-react";
+import Link from "next/link";
 
 type TOCChapter = {
   id: string;
   title: string;
   isBookmarked: boolean;
+  href: string;
 };
 
 type TocPanelProps = {
@@ -35,15 +37,19 @@ const TocPanel = ({ chapters, onToggleBookmark, onClose }: TocPanelProps) => {
         {chapters.map((chapter) => (
           <div
             key={chapter.id}
-            className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2.5 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
+            className="group flex items-center justify-between rounded-lg border border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 transition"
           >
-            <span className="text-sm text-slate-900 dark:text-slate-100">
+            <Link
+              href={chapter.href}
+              onClick={onClose}
+              className="grow px-3 py-2.5 text-sm text-slate-900 dark:text-slate-100"
+            >
               {chapter.title}
-            </span>
+            </Link>
             <button
               type="button"
               onClick={() => onToggleBookmark(chapter.id)}
-              className="text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
+              className="px-3 py-2.5 text-slate-400 hover:text-[#007b5e] dark:hover:text-emerald-400 transition"
             >
               <Bookmark
                 size={16}

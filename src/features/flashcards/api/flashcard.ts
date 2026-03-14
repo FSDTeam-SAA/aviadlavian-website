@@ -1,5 +1,23 @@
 import { api } from "@/lib/api";
 
+export type FlashcardFilterParams = {
+  page?: number;
+  limit?: number;
+  status?: string;
+  filterBytopicId?: string;
+  filterByAcuity?: string;
+  filterByAgeGroup?: string;
+  sortBy?: string;
+  search?: string;
+};
+
+export type FlashcardResponse = {
+  message: string;
+  statusCode: number;
+  status: string;
+  data: unknown;
+};
+
 export async function getinjuryFilterOptions() {
   const res = await api.get(`/injury/filter-options/`);
   return res.data;
@@ -27,11 +45,31 @@ export async function createFlashcardReview(data: {
   flashcardId: string;
   result: string;
   customInterval: string;
-}) {
-  const res = await api.post(`/flashcard-progress/create-review`, data);
+}): Promise<FlashcardResponse> {
+  const res = await api.post<FlashcardResponse>(
+    `/flashcard-progress/create-review`,
+    data,
+  );
   return res.data;
 }
 export async function getFlashcardProgress(topicId: string) {
   const res = await api.get(`/flashcard-progress/my-progress/${topicId}`);
+  return res.data;
+}
+
+// Get flashcards with full filter/search support
+export async function getFilteredFlashcards(params: FlashcardFilterParams) {
+  const query = new URLSearchParams();
+  if (params.page !== undefined) query.set("page", String(params.page));
+  if (params.limit !== undefined) query.set("limit", String(params.limit));
+  if (params.status) query.set("status", params.status);
+  if (params.filterBytopicId)
+    query.set("filterBytopicId", params.filterBytopicId);
+  if (params.filterByAcuity) query.set("filterByAcuity", params.filterByAcuity);
+  if (params.filterByAgeGroup)
+    query.set("filterByAgeGroup", params.filterByAgeGroup);
+  if (params.sortBy) query.set("sortBy", params.sortBy);
+  if (params.search) query.set("search", params.search);
+  const res = await api.get(`/flashcard/get-flashcards/?${query.toString()}`);
   return res.data;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useRef } from "react";
+import { nanoid } from "nanoid";
 import Link from "next/link";
 import { BookOpen, ClipboardList, PencilLine, Edit3, X } from "lucide-react";
 import Notes from "./Notes";
@@ -22,13 +23,15 @@ type SubLibraryDetailsProps = {
 };
 
 const COLORS = [
-  { name: "Yellow", value: "#fef3c7", border: "#f59e0b" },
-  { name: "Blue", value: "#bfdbfe", border: "#3b82f6" },
-  { name: "Green", value: "#bbf7d0", border: "#10b981" },
-  { name: "Pink", value: "#fbcfe8", border: "#ec4899" },
-  { name: "Purple", value: "#e9d5ff", border: "#a855f7" },
-  { name: "Orange", value: "#ffedd5", border: "#f97316" },
-  { name: "Cyan", value: "#cffafe", border: "#06b6d4" },
+  { name: "Yellow", value: "#fef08a", border: "#facc15", text: "#854d0e" },
+  { name: "Blue", value: "#bfdbfe", border: "#60a5fa", text: "#1e40af" },
+  { name: "Green", value: "#bbf7d0", border: "#4ade80", text: "#166534" },
+  { name: "Pink", value: "#fbcfe8", border: "#f472b6", text: "#9d174d" },
+  { name: "Purple", value: "#e9d5ff", border: "#c084fc", text: "#6b21a8" },
+  { name: "Orange", value: "#ffedd5", border: "#fb923c", text: "#9a3412" },
+  { name: "Cyan", value: "#cffafe", border: "#22d3ee", text: "#155e75" },
+  { name: "Lavender", value: "#ede9fe", border: "#a78bfa", text: "#5b21b6" },
+  { name: "Rose", value: "#ffe4e6", border: "#fb7185", text: "#9f1239" },
 ];
 
 const SubLibraryDetails = ({
@@ -83,8 +86,9 @@ const SubLibraryDetails = ({
         id: t._id,
         title: t.Name,
         isBookmarked: false,
+        href: `/library/${libraryId}/${t._id}`,
       })) || [],
-    [article],
+    [article, libraryId],
   );
 
   const toggleBookmark = (id: string) => {
@@ -145,9 +149,24 @@ const SubLibraryDetails = ({
     if (!rangeOffsets) return;
 
     const rect = selection.getRangeAt(0).getBoundingClientRect();
+
+    // Calculate responsive position with bounds checking
+    let x = rect.left + rect.width / 2;
+    const y = rect.top - 60;
+
+    const padding = 16;
+    const estimatedWidth = Math.min(window.innerWidth - padding * 2, 380);
+
+    // Keep menu within viewport horizontally
+    if (x - estimatedWidth / 2 < padding) {
+      x = estimatedWidth / 2 + padding;
+    } else if (x + estimatedWidth / 2 > window.innerWidth - padding) {
+      x = window.innerWidth - estimatedWidth / 2 - padding;
+    }
+
     setFloatingMenu({
-      x: rect.left + window.scrollX + rect.width / 2,
-      y: rect.top + window.scrollY - 50,
+      x,
+      y: y + window.scrollY,
       text: selection.toString(),
       range: rangeOffsets,
     });
@@ -156,14 +175,26 @@ const SubLibraryDetails = ({
   const handleAddHighlight = (color: string) => {
     if (!floatingMenu) return;
 
+    // Check if a highlight with the EXACT same range already exists
+    const existing = highlights.find(
+      (h) =>
+        h.text === floatingMenu.text &&
+        "from" in h.range &&
+        "to" in h.range &&
+        h.range.from === floatingMenu.range.from &&
+        h.range.to === floatingMenu.range.to,
+    );
+
     const newHighlight: AnnotationHighlight = {
-      id: chapterId,
+      id: existing?.id ?? nanoid(),
       text: floatingMenu.text,
       range: floatingMenu.range,
       color,
     };
 
-    const updatedHighlights = [...highlights, newHighlight];
+    const updatedHighlights = existing
+      ? highlights.map((h) => (h.id === existing.id ? newHighlight : h))
+      : [...highlights, newHighlight];
 
     // Optimistically update the query cache for immediate feedback
     queryClient.setQueryData(
@@ -191,33 +222,74 @@ const SubLibraryDetails = ({
   };
 
   const processedDescription = useMemo(() => {
-    if (!topic?.Description) return "No description available.";
-    const chapterHighlights = highlights.filter((h) => h.id === chapterId);
-    if (!chapterHighlights.length) return topic.Description;
-
-    let html = topic.Description;
-    const uniqueTexts = Array.from(
-      new Set(chapterHighlights.map((h) => h.text)),
+    return (
+      topic?.Description || article?.description || "No description available."
     );
+  }, [topic?.Description, article?.description]);
 
-    uniqueTexts.forEach((textToHighlight) => {
-      const highlight = chapterHighlights.find(
-        (h) => h.text === textToHighlight,
-      );
-      if (!highlight) return;
-      const escapedText = textToHighlight.replace(
-        /[.*+?^${}()|[\]\\]/g,
-        "\\$&",
-      );
-      const regex = new RegExp(`(${escapedText})`, "g");
-      html = html.replace(
-        regex,
-        `<span style="background-color: ${highlight.color} !important; box-shadow: 0 0 0 1px rgba(0,0,0,0.05); border-radius: 4px; padding: 0 2px;">$1</span>`,
-      );
+  // Handle DOM-based highlighting to isolate specific occurrences
+  React.useEffect(() => {
+    if (!contentRef.current) return;
+
+    // Reset to original HTML before applying highlights
+    // This allows the character offsets to be accurate every time
+    contentRef.current.innerHTML = processedDescription;
+
+    if (!highlights.length) return;
+
+    // Helper to find the Text node and offset for a given character index
+    const getTextNodeAtOffset = (root: Node, offset: number) => {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let currentOffset = 0;
+      let node = walker.nextNode();
+
+      while (node) {
+        const length = node.textContent?.length || 0;
+        if (currentOffset + length >= offset) {
+          return { node, offset: offset - currentOffset };
+        }
+        currentOffset += length;
+        node = walker.nextNode();
+      }
+      return null;
+    };
+
+    // Use document fragment for bulk operations if needed, but here we just wrap
+    highlights.forEach((h) => {
+      try {
+        if (!("from" in h.range) || !("to" in h.range)) return;
+
+        const start = getTextNodeAtOffset(contentRef.current!, h.range.from);
+        const end = getTextNodeAtOffset(contentRef.current!, h.range.to);
+
+        if (start && end) {
+          const range = document.createRange();
+          range.setStart(start.node, start.offset);
+          range.setEnd(end.node, end.offset);
+
+          const colorObj = COLORS.find((c) => c.value === h.color) || COLORS[0];
+          const span = document.createElement("span");
+          span.style.backgroundColor = `${h.color}`;
+          span.style.color = colorObj.text;
+          span.style.padding = "0 1px";
+          span.style.borderRadius = "2px";
+          span.style.fontWeight = "500";
+          span.style.transition = "all 0.2s";
+          // span.style.borderBottom = `2px solid ${colorObj.border}80`;
+          span.id = `hl-${h.id}`;
+
+          // Wrap the range content in the span
+          range.surroundContents(span);
+        }
+      } catch (err) {
+        console.warn("Could not apply highlight to range:", h.range, err);
+      }
     });
 
-    return html;
-  }, [topic, highlights, chapterId]);
+    return () => {
+      // Clean up happens automatically when dangerouslySetInnerHTML re-renders
+    };
+  }, [processedDescription, highlights]);
 
   if (isLibraryLoading || isAnnotationsLoading) {
     return (
@@ -267,29 +339,32 @@ const SubLibraryDetails = ({
         {/* Floating Highlight Menu */}
         {floatingMenu && (
           <div
-            className="fixed z-50 flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 shadow-2xl ring-1 ring-white/10 animate-in fade-in zoom-in duration-200"
+            className="fixed z-50 flex items-center justify-center rounded-2xl bg-slate-900/95 backdrop-blur-md px-3 py-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/10 animate-in fade-in zoom-in slide-in-from-bottom-2 duration-300 max-w-[calc(100vw-32px)]"
             style={{
               left: `${floatingMenu.x}px`,
               top: `${floatingMenu.y}px`,
               transform: "translateX(-50%)",
             }}
           >
-            <div className="flex items-center gap-2">
-              {COLORS.map((c) => (
-                <button
-                  key={c.value}
-                  onClick={() => handleAddHighlight(c.value)}
-                  className="h-7 w-7 rounded-full border border-white/20 transition hover:scale-125 active:scale-95"
-                  style={{ backgroundColor: c.value, borderColor: c.border }}
-                  title={c.name}
-                />
-              ))}
-              <div className="mx-1 h-6 w-px bg-white/20" />
+            <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+              <div className="flex flex-wrap items-center justify-center gap-1.5">
+                {COLORS.map((c) => (
+                  <button
+                    key={c.value}
+                    onClick={() => handleAddHighlight(c.value)}
+                    className="h-7 w-7 sm:h-8 sm:w-8 rounded-full  border-transparent transition-all hover:scale-110 hover:border-white active:scale-95 shadow-sm"
+                    style={{ backgroundColor: c.value }}
+                    title={c.name}
+                  />
+                ))}
+              </div>
+              <div className="h-6 w-px bg-white/20 hidden sm:block mx-1" />
               <button
                 onClick={() => setFloatingMenu(null)}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-red-500/80 transition-colors"
+                title="Cancel"
               >
-                <X size={14} />
+                <X size={16} />
               </button>
             </div>
             {/* Tooltip arrow */}
@@ -335,9 +410,6 @@ const SubLibraryDetails = ({
                 prose-h3:text-xl prose-h3:font-bold prose-h3:mt-8
                 prose-p:leading-relaxed prose-p:mb-4
                 selection:bg-emerald-100 dark:selection:bg-emerald-900/40"
-              dangerouslySetInnerHTML={{
-                __html: processedDescription,
-              }}
             />
           </div>
 
@@ -384,31 +456,52 @@ const SubLibraryDetails = ({
         </div>
 
         {(showTOC || showLearningPlan || showNotesPanel) && (
-          <div className="absolute inset-x-6 top-48 z-50 max-h-[600px] overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900">
-            {showNotesPanel && (
-              <NotesPanel
-                newNote={newNote}
-                setNewNote={setNewNote}
-                selectedSection={selectedSection}
-                setSelectedSection={setSelectedSection}
-                onSave={addNote}
-                onClose={() => setShowNotesPanel(false)}
-              />
-            )}
-            {showLearningPlan && (
-              <LearningPlanPanel
-                libraryId={libraryId}
-                chapterId={chapterId}
-                onClose={() => setShowLearningPlan(false)}
-              />
-            )}
-            {showTOC && (
-              <TocPanel
-                chapters={chapters}
-                onToggleBookmark={toggleBookmark}
-                onClose={() => setShowTOC(false)}
-              />
-            )}
+          <div className="fixed inset-x-4 bottom-4 top-20 z-50 overflow-y-auto rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900 lg:absolute lg:inset-x-6 lg:top-48 lg:bottom-auto lg:max-h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white/80 p-4 backdrop-blur-md dark:bg-slate-900/80 lg:hidden">
+              <span className="font-bold">
+                {showTOC
+                  ? "Table of Contents"
+                  : showLearningPlan
+                    ? "Learning Plan"
+                    : "Notes"}
+              </span>
+              <button
+                onClick={() => {
+                  setShowTOC(false);
+                  setShowLearningPlan(false);
+                  setShowNotesPanel(false);
+                }}
+                className="rounded-full bg-slate-100 p-2 dark:bg-slate-800"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-2 lg:p-0">
+              {showNotesPanel && (
+                <NotesPanel
+                  newNote={newNote}
+                  setNewNote={setNewNote}
+                  selectedSection={selectedSection}
+                  setSelectedSection={setSelectedSection}
+                  onSave={addNote}
+                  onClose={() => setShowNotesPanel(false)}
+                />
+              )}
+              {showLearningPlan && (
+                <LearningPlanPanel
+                  libraryId={libraryId}
+                  chapterId={chapterId}
+                  onClose={() => setShowLearningPlan(false)}
+                />
+              )}
+              {showTOC && (
+                <TocPanel
+                  chapters={chapters}
+                  onToggleBookmark={toggleBookmark}
+                  onClose={() => setShowTOC(false)}
+                />
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -452,7 +545,11 @@ const SubLibraryDetails = ({
               subspecialty
             </p>
             <button className="mt-auto flex h-12 items-center justify-center rounded-xl bg-[#007b5e] font-bold text-white transition hover:bg-[#00634b]">
-              {highlights.filter((h) => h.id === chapterId).length} Highlights
+              {
+                highlights.filter((h) => article?.description?.includes(h.text))
+                  .length
+              }{" "}
+              Highlights
             </button>
           </div>
         </div>

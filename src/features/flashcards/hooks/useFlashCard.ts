@@ -6,6 +6,8 @@ import {
   getInjuryFlashcardId,
   createFlashcardReview,
   getFlashcardProgress,
+  getFilteredFlashcards,
+  FlashcardFilterParams,
 } from "../api/flashcard";
 
 export const useInjuryFilters = () => {
@@ -54,5 +56,13 @@ export const useFlashcardProgress = (topicId: string) => {
     queryKey: ["flashcardProgress", topicId],
     queryFn: () => getFlashcardProgress(topicId),
     enabled: !!topicId,
+  });
+};
+
+export const useFilteredFlashcards = (params: FlashcardFilterParams) => {
+  return useQuery({
+    queryKey: ["filteredFlashcards", params],
+    queryFn: () => getFilteredFlashcards(params),
+    enabled: true,
   });
 };

@@ -1,15 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Trash2, User } from "lucide-react";
+import { User } from "lucide-react";
 import { useTheme } from "next-themes";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import SettingEdit from "../common/SettingEdit";
 
 const MIN_FONT_SIZE = 14;
@@ -42,14 +35,14 @@ const MainSettings = () => {
   };
 
   return (
-    <div className="w-full rounded-2xl border border-slate-200/80 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
-      <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+    <div className="w-full rounded-3xl border border-slate-200/80 bg-linear-to-b from-white to-slate-50 p-6 shadow-sm sm:p-8 dark:border-slate-700 dark:from-slate-900 dark:to-slate-950">
+      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
         Settings
       </h1>
 
       {/* Appearance Section */}
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+      <div className="mt-8 rounded-2xl border border-slate-200/70 bg-white/80 p-5 shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/60">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
           Appearance
         </h2>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
@@ -57,23 +50,23 @@ const MainSettings = () => {
         </p>
 
         {/* Font Size */}
-        <div className="mt-6">
+        <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-800/40">
           <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
             Font Size
           </h3>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Choose your preferred visual theme
           </p>
-          <div className="mt-3 inline-flex items-center overflow-hidden rounded-md border border-slate-300 dark:border-slate-600">
+          <div className="mt-3 inline-flex items-center overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm dark:border-slate-600 dark:bg-slate-900">
             <button
               type="button"
               onClick={() =>
                 setFontSize((prev) => Math.max(MIN_FONT_SIZE, prev - 1))
               }
-              className="px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 active:scale-95 dark:text-slate-300 dark:hover:bg-slate-800"
               aria-label="Decrease font size"
             >
-              +
+              -
             </button>
             <span className="border-x border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-900 dark:border-slate-600 dark:text-slate-100">
               A
@@ -83,52 +76,52 @@ const MainSettings = () => {
               onClick={() =>
                 setFontSize((prev) => Math.min(MAX_FONT_SIZE, prev + 1))
               }
-              className="px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 active:scale-95 dark:text-slate-300 dark:hover:bg-slate-800"
               aria-label="Increase font size"
             >
-              -
+              +
             </button>
           </div>
         </div>
       </div>
 
       {/* Account & Privacy Section */}
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+      <div className="mt-8 rounded-2xl border border-slate-200/70 bg-white/80 p-5 shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/60">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
           Account & Privacy
         </h2>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div className="flex items-center gap-3 rounded-lg bg-slate-200 px-4 py-3 text-left text-slate-900 transition hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">
+          <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-left text-slate-900 transition hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">
             <User size={20} />
             <span className="font-medium">Profile Settings</span>
           </div>
 
-          <button
+          {/* <button
             type="button"
-            className="flex items-center gap-3 rounded-lg bg-slate-200 px-4 py-3 text-left text-slate-900 transition hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+            className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-left text-slate-900 transition hover:bg-red-50 hover:text-red-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-red-950/30 dark:hover:text-red-300"
           >
             <Trash2 size={20} />
             <span className="font-medium">Delete Account</span>
-          </button>
+          </button> */}
         </div>
 
-        <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+        <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800/40">
           <SettingEdit />
         </div>
       </div>
 
       {/* Theme Section */}
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+      <div className="mt-8 rounded-2xl border border-slate-200/70 bg-white/80 p-5 shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/60">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
           Theme
         </h2>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
           Choose your preferred visual theme
         </p>
 
-        <div className="mt-4 flex items-center gap-6">
-          <label className="flex cursor-pointer items-center gap-2">
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700">
             <input
               type="radio"
               name="theme"
@@ -142,7 +135,7 @@ const MainSettings = () => {
             </span>
           </label>
 
-          <label className="flex cursor-pointer items-center gap-2">
+          <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700">
             <input
               type="radio"
               name="theme"
@@ -159,13 +152,13 @@ const MainSettings = () => {
       </div>
 
       {/* Language and Region */}
-      <div className="mt-8 grid gap-6 sm:grid-cols-2">
+      {/* <div className="mt-8 grid gap-6 rounded-2xl border border-slate-200/70 bg-white/80 p-5 shadow-sm backdrop-blur-sm sm:grid-cols-2 dark:border-slate-700 dark:bg-slate-900/60">
         <div>
           <label className="block text-sm font-medium text-slate-900 dark:text-slate-100">
             Language
           </label>
           <Select defaultValue="english">
-            <SelectTrigger className="mt-2 w-full rounded-lg border-slate-300 bg-slate-200 dark:border-slate-600 dark:bg-slate-800">
+            <SelectTrigger className="mt-2 w-full rounded-lg border-slate-300 bg-white shadow-sm dark:border-slate-600 dark:bg-slate-800">
               <SelectValue placeholder="Select language" />
             </SelectTrigger>
             <SelectContent>
@@ -182,7 +175,7 @@ const MainSettings = () => {
             Region
           </label>
           <Select defaultValue="usa">
-            <SelectTrigger className="mt-2 w-full rounded-lg border-slate-300 bg-slate-200 dark:border-slate-600 dark:bg-slate-800">
+            <SelectTrigger className="mt-2 w-full rounded-lg border-slate-300 bg-white shadow-sm dark:border-slate-600 dark:bg-slate-800">
               <SelectValue placeholder="Select region" />
             </SelectTrigger>
             <SelectContent>
@@ -193,7 +186,7 @@ const MainSettings = () => {
             </SelectContent>
           </Select>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

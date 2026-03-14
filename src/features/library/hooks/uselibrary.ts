@@ -6,6 +6,7 @@ import {
   saveLearningPlan,
   getLearningPlans,
   createLearningPlan,
+  addFlashcardToLearningPlan,
   ArticleAnnotations,
   AnnotationHighlight,
   AnnotationNote,
@@ -67,6 +68,24 @@ export function useCreateLearningPlan() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => createLearningPlan(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["learning-plans"],
+      });
+    },
+  });
+}
+
+export function useAddFlashcardToLearningPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      learningPlanId,
+      flashcardId,
+    }: {
+      learningPlanId: string;
+      flashcardId: string;
+    }) => addFlashcardToLearningPlan(learningPlanId, flashcardId),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["learning-plans"],

@@ -1,5 +1,4 @@
 import FlashCardDetails from "@/features/flashcards/commponent/FlashCardDetails";
-import SubFlashCard from "@/features/flashcards/commponent/SubFlashCard";
 import React from "react";
 
 const page = async ({
@@ -32,6 +31,7 @@ const page = async ({
       /> */}
       <FlashCardDetails
         lastid={SubFlashCardId}
+        flashcardId={flashcardId}
         subspecialty={subspecialtyTitle}
         chapter={chapterTitle}
       />

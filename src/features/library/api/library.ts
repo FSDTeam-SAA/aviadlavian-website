@@ -6,7 +6,7 @@ import {
 } from "../type/library";
 
 export type AnnotationHighlight = {
-  id: string; // chapterId / topicId — used to filter highlights per chapter
+  id: string; // unique highlight identifier (nanoid)
   text: string;
   range: { from: number; to: number } | { nodePath: string };
   color: string;
@@ -77,12 +77,12 @@ type SaveLearningPlanResponse = {
 export async function saveLearningPlan(
   learningPlanId: string,
   libraryId: string,
-): Promise<Record<string, unknown>> {
+): Promise<SaveLearningPlanResponse> {
   const response = await api.post<SaveLearningPlanResponse>(
     `/learning-plan/${learningPlanId}/article`,
     { articleId: libraryId },
   );
-  return response.data.data;
+  return response.data;
 }
 
 export type LearningPlanArticle = {
@@ -140,4 +140,15 @@ export async function createLearningPlan(): Promise<LearningPlanData> {
     data: LearningPlanData;
   }>("/learning-plan/create");
   return response.data.data;
+}
+
+export async function addFlashcardToLearningPlan(
+  learningPlanId: string,
+  flashcardId: string,
+): Promise<SaveLearningPlanResponse> {
+  const response = await api.post<SaveLearningPlanResponse>(
+    `/learning-plan/${learningPlanId}/flashcard`,
+    { flashcardId },
+  );
+  return response.data;
 }

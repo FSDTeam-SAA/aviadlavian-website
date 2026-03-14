@@ -12,6 +12,7 @@ export interface Topic {
 // ── Populated Flashcard ──
 export interface PopulatedFlashcard {
   _id: string;
+  planId?: string;
   flashcardId: {
     _id: string;
     question?: string;
@@ -29,9 +30,36 @@ export interface PopulatedFlashcard {
   answeredAt?: string | null;
 }
 
+export interface Highlight {
+  id: string;
+  text: string;
+  range: {
+    from?: number;
+    to?: number;
+    nodePath?: string;
+  };
+  color: string;
+}
+
+export interface Note {
+  id: string;
+  content: string;
+}
+
+export interface Annotation {
+  _id: string;
+  articleId: string;
+  userId: string;
+  highlights: Highlight[];
+  notes: Note[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── Populated Article ──
 export interface PopulatedArticle {
   _id: string;
+  planId?: string;
   articleId: {
     _id: string;
     name?: string;
@@ -40,6 +68,30 @@ export interface PopulatedArticle {
   };
   isRead: "unread" | "read" | "skipped";
   readAt?: string | null;
+  annotations?: Annotation | null;
+}
+
+// ── Populated Quiz (MCQ) ──
+export interface PopulatedQuiz {
+  _id: string;
+  planId?: string;
+  quizId: {
+    _id: string;
+    questionText: string;
+    explanation?: string;
+    topicIds: Topic[];
+    options: {
+      text: string;
+      isCorrect: boolean;
+      selectedCount?: number;
+      _id: string;
+    }[];
+    totalAttempts?: number;
+    correctAttempts?: number;
+    [key: string]: unknown;
+  };
+  isAnswered: "unanswered" | "correct" | "incorrect" | "skipped";
+  answeredAt?: string | null;
 }
 
 // ── Learning Plan ──
@@ -50,12 +102,27 @@ export interface LearningPlan {
   description?: string;
   flashcards: PopulatedFlashcard[];
   articles: PopulatedArticle[];
+  quizzes: PopulatedQuiz[];
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 // ── API Responses ──
+export interface BaseResponse<T = unknown> {
+  statusCode: number;
+  message: string;
+  status: string;
+  data: T;
+}
+
+export interface ArticleAnnotationsResponse {
+  message: string;
+  statusCode: number;
+  status: string;
+  data: Annotation;
+}
+
 export interface LearningPlanMeta {
   page: number;
   limit: number;

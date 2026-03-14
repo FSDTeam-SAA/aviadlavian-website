@@ -4,9 +4,17 @@
 import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useLearningPlan } from "../hooks/useLearningPlan";
-import { findBodyRegion, getTopicProgress } from "../utils/learningplanHelpers";
-import { TopicProgress } from "../types/learningplan.types";
+import { useLearningPlan, useAnnotations } from "../hooks/useLearningPlan";
+import {
+  findBodyRegion,
+  getTopicProgress,
+  getTopicArticles,
+} from "../utils/learningplanHelpers";
+import {
+  TopicProgress,
+  PopulatedArticle,
+  LearningPlan,
+} from "../types/learningplan.types";
 
 interface SingleLearningProps {
   bodyRegion: string;
@@ -35,15 +43,65 @@ const ProgressBar = ({
   );
 };
 
+// ── Annotation Count Wrapper ──
+const TopicAnnotationCounts = ({
+  articles,
+  type,
+}: {
+  articles: PopulatedArticle[];
+  type: "notes" | "highlights";
+}) => {
+  return (
+    <div className="flex items-center gap-1">
+      {articles.map((art) => (
+        <ArticleCountFetcher
+          key={art._id}
+          articleId={art.articleId._id}
+          type={type}
+        />
+      ))}
+    </div>
+  );
+};
+
+const ArticleCountFetcher = ({
+  articleId,
+  type,
+}: {
+  articleId: string;
+  type: "notes" | "highlights";
+}) => {
+  const { data } = useAnnotations(articleId);
+  const count =
+    type === "notes"
+      ? data?.data?.notes?.length || 0
+      : data?.data?.highlights?.length || 0;
+
+  if (count === 0) return null;
+  return (
+    <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 font-bold">
+      {count}
+    </span>
+  );
+};
+
 // ── Topic Progress Card ──
 const TopicProgressCard = ({
   progress,
   bodyRegion,
+  plans,
 }: {
   progress: TopicProgress;
   bodyRegion: string;
+  plans: LearningPlan[];
 }) => {
   const router = useRouter();
+  const topicArticles = React.useMemo(
+    () => getTopicArticles(plans, progress.topic._id),
+    [plans, progress.topic._id],
+  );
+
+  console.log("clg", progress);
 
   return (
     <div className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -163,6 +221,70 @@ const TopicProgressCard = ({
             ? `${progress.flashcards.done} of ${progress.flashcards.total} flashcards answered`
             : "No flashcards"}
         </span>
+      </div>
+
+      {/* Notes */}
+      <div
+        onClick={() =>
+          router.push(
+            `/learningplan/${bodyRegion}/${progress.topic._id}?view=annotations`,
+          )
+        }
+        className="mb-4 flex items-center gap-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40 p-1 rounded transition-colors group"
+      >
+        <div className="flex w-36 items-center gap-2">
+          <svg
+            className="h-4 w-4 text-slate-500 group-hover:text-[#0077A3]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+            />
+          </svg>
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-[#0077A3]">
+            Notes
+          </span>
+        </div>
+        <div className="flex-1 flex gap-2">
+          <TopicAnnotationCounts articles={topicArticles} type="notes" />
+        </div>
+      </div>
+
+      {/* Highlights */}
+      <div
+        onClick={() =>
+          router.push(
+            `/learningplan/${bodyRegion}/${progress.topic._id}?view=annotations`,
+          )
+        }
+        className="mb-5 flex items-center gap-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40 p-1 rounded transition-colors group"
+      >
+        <div className="flex w-36 items-center gap-2">
+          <svg
+            className="h-4 w-4 text-slate-500 group-hover:text-[#0077A3]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+            />
+          </svg>
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-[#0077A3]">
+            Highlights
+          </span>
+        </div>
+        <div className="flex-1 flex gap-2">
+          <TopicAnnotationCounts articles={topicArticles} type="highlights" />
+        </div>
       </div>
 
       {/* View Details Button */}
@@ -287,6 +409,7 @@ const SingleLearning = ({ bodyRegion }: SingleLearningProps) => {
                 key={progress.topic._id}
                 progress={progress}
                 bodyRegion={encodeURIComponent(decodedRegion.toLowerCase())}
+                plans={data?.data || []}
               />
             ))
           )}

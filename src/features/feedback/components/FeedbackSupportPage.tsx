@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useSubmitFeedback } from "../hooks/useFeedback";
 
 const feedbackTypes = [
   "General Feedback",
@@ -25,7 +26,8 @@ export default function FeedbackSupportPage() {
   const [rating, setRating] = useState(4);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { mutateAsync: submitFeedback, isPending: isSubmitting } =
+    useSubmitFeedback();
 
   const isValid = useMemo(() => {
     return subject.trim().length > 0 && message.trim().length > 0;
@@ -40,17 +42,22 @@ export default function FeedbackSupportPage() {
     }
 
     try {
-      setIsSubmitting(true);
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await submitFeedback({
+        type: selectedType,
+        rating,
+        subject,
+        message,
+      });
       toast.success("Feedback sent successfully");
       setSubject("");
       setMessage("");
       setRating(4);
       setSelectedType("Bug Report");
-    } catch {
-      toast.error("Failed to send feedback");
-    } finally {
-      setIsSubmitting(false);
+    } catch (error: unknown) {
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || "Failed to send feedback";
+      toast.error(errorMessage);
     }
   };
 
