@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Heart } from "lucide-react";
 import { Accordion } from "@/components/ui/accordion";
 import FlashCard from "../common/FlashCard";
-import { useInjuryFilters } from "../hooks/useFlashCard";
+import { useInjuryFilters, useFilteredFlashcards } from "../hooks/useFlashCard";
 import { useQueries } from "@tanstack/react-query";
 import { getInjuriesByRegion } from "../api/flashcard";
 
@@ -33,6 +33,19 @@ type InjuryData = {
 const MainFlashCard = () => {
   const [isAnswerRevealed, setIsAnswerRevealed] = useState(false);
   const { data: filters } = useInjuryFilters();
+
+  // Fetch the first flashcard for "Flashcard of the day"
+  const { data: firstCardData, isLoading: firstCardLoading } =
+    useFilteredFlashcards({
+      page: 1,
+      limit: 1,
+      status: "active",
+    });
+  const firstCard = (
+    firstCardData?.data as Array<{ question: string; answer: string }>
+  )?.[0];
+  const todayQuestion = firstCard?.question;
+  const todayAnswer = firstCard?.answer;
   const bodyRegions = filters?.data?.bodyRegions || [];
 
   // Fetch injuries for all body regions using useQueries
@@ -83,10 +96,16 @@ const MainFlashCard = () => {
                 />
               </div>
 
-              <p className="text-center text-sm leading-relaxed text-orange-900 dark:text-orange-100">
-                A 65 years old male presents with sudden onset chest pain
-                radiating to his back. What is most likely diagnosis?
-              </p>
+              {firstCardLoading ? (
+                <div className="space-y-2">
+                  <div className="mx-auto h-3 w-3/4 animate-pulse rounded-full bg-orange-200 dark:bg-orange-900/40" />
+                  <div className="mx-auto h-3 w-1/2 animate-pulse rounded-full bg-orange-200 dark:bg-orange-900/40" />
+                </div>
+              ) : (
+                <p className="text-center text-sm leading-relaxed text-orange-900 dark:text-orange-100">
+                  {todayQuestion || "No flashcard available"}
+                </p>
+              )}
             </div>
 
             {/* Answer Section */}
@@ -98,7 +117,7 @@ const MainFlashCard = () => {
               ) : (
                 <div className="text-center">
                   <p className="text-2xl font-bold text-orange-700 dark:text-orange-400">
-                    Pulmonary Embolism
+                    {todayAnswer || "—"}
                   </p>
                 </div>
               )}

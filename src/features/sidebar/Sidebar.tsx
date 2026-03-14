@@ -144,7 +144,11 @@ const Sidebar = () => {
           <ul className="space-y-1.5">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const isActive = item.url ? pathname === item.url : false;
+              const isActive = item.url
+                ? item.url === "/"
+                  ? pathname === "/"
+                  : pathname === item.url || pathname.startsWith(item.url + "/")
+                : false;
 
               return (
                 <li key={item.label}>
