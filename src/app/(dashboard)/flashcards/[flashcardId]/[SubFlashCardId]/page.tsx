@@ -9,6 +9,8 @@ const page = async ({
   searchParams?: Promise<{
     subspecialty?: string | string[];
     chapter?: string | string[];
+    totalFlashcards?: string | string[];
+    filteredFlashcards?: string | string[];
   }>;
 }) => {
   const { flashcardId, SubFlashCardId } = await params;
@@ -22,6 +24,17 @@ const page = async ({
     ? search?.chapter[0]
     : search?.chapter;
 
+  const totalFlashcardsRaw = Array.isArray(search?.totalFlashcards)
+    ? search?.totalFlashcards[0]
+    : search?.totalFlashcards;
+
+  const filteredFlashcardsRaw = Array.isArray(search?.filteredFlashcards)
+    ? search?.filteredFlashcards[0]
+    : search?.filteredFlashcards;
+
+  const totalFlashcards = Number(totalFlashcardsRaw || 0);
+  const filteredFlashcards = Number(filteredFlashcardsRaw || 0);
+
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-slate-100 p-4 sm:p-6 lg:p-8 dark:bg-slate-950">
       {/* <SubFlashCard
@@ -34,6 +47,8 @@ const page = async ({
         flashcardId={flashcardId}
         subspecialty={subspecialtyTitle}
         chapter={chapterTitle}
+        totalFlashcards={totalFlashcards}
+        filteredFlashcards={filteredFlashcards}
       />
     </main>
   );

@@ -44,7 +44,6 @@ export async function getInjuryFlashcardId(id: string) {
 export async function createFlashcardReview(data: {
   flashcardId: string;
   result: string;
-  customInterval: string;
 }): Promise<FlashcardResponse> {
   const res = await api.post<FlashcardResponse>(
     `/flashcard-progress/create-review`,

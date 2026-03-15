@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   useInjuryFlashcardId,
+  useAllFlashcards,
   useCreateFlashcardReview,
 } from "../hooks/useFlashCard";
 import { Button } from "@/components/ui/button";
@@ -19,31 +20,33 @@ type FlashCardDetailsProps = {
   chapter?: string;
   lastid?: string;
   flashcardId?: string;
+  totalFlashcards?: number;
+  filteredFlashcards?: number;
 };
-
-const INTERVAL_OPTIONS = [
-  { label: "5 min", value: "5m" },
-  { label: "1 hour", value: "1h" },
-  { label: "2 days", value: "2d" },
-  { label: "7 days", value: "7d" },
-  { label: "15 days", value: "15d" },
-  { label: "30 days", value: "30d" },
-  { label: "1 month", value: "1mon" },
-];
 
 const FlashCardDetails = ({
   subspecialty = "Knee",
   chapter = "Chondromalacia Patella",
   lastid,
   flashcardId,
+  totalFlashcards = 0,
+  filteredFlashcards = 0,
 }: FlashCardDetailsProps) => {
   const router = useRouter();
   const [isAnswerRevealed, setIsAnswerRevealed] = useState(false);
   const [confidenceRating, setConfidenceRating] = useState<string | null>(null);
-  const [customInterval, setCustomInterval] = useState("");
 
   const { data: flashdata } = useInjuryFlashcardId(lastid || "");
+  const { data: flashcardsByTopic } = useAllFlashcards(flashcardId || "");
   const createReviewMutation = useCreateFlashcardReview();
+
+  const chapterFlashcards =
+    (flashcardsByTopic?.data as Array<{ _id: string }>) || [];
+  const safeTotalFlashcards = totalFlashcards || chapterFlashcards.length;
+  const currentIndex = chapterFlashcards.findIndex(
+    (card) => card._id === lastid,
+  );
+  const currentStep = currentIndex >= 0 ? currentIndex + 1 : 0;
 
   const { data: learningPlans } = useLearningPlans();
   const addFlashcardToPlanMutation = useAddFlashcardToLearningPlan();
@@ -75,11 +78,13 @@ const FlashCardDetails = ({
     );
   };
 
-  const handleSubmitReview = () => {
-    if (!lastid || !confidenceRating || !customInterval) {
-      toast.error("Please select rating and interval before submitting");
+  const handleSubmitReview = (rating: "correct" | "incorrect" | "unknown") => {
+    if (!lastid) {
+      toast.error("Flashcard not found");
       return;
     }
+
+    setConfidenceRating(rating);
 
     const resultMap: Record<string, string> = {
       correct: "correct",
@@ -90,13 +95,11 @@ const FlashCardDetails = ({
     createReviewMutation.mutate(
       {
         flashcardId: lastid,
-        result: resultMap[confidenceRating] || "wrong",
-        customInterval: customInterval,
+        result: resultMap[rating] || "wrong",
       },
       {
         onSuccess: (data) => {
           toast.success(data?.message || "Review saved successfully");
-          setCustomInterval("");
           setConfidenceRating(null);
           setIsAnswerRevealed(false);
           router.back();
@@ -110,6 +113,21 @@ const FlashCardDetails = ({
 
   const question = flashdata?.data?.question || "Loading...";
   const answer = flashdata?.data?.answer || "Loading...";
+
+  const goToFlashcardByIndex = (index: number) => {
+    if (!flashcardId || !chapterFlashcards[index]?._id) return;
+
+    const query = new URLSearchParams({
+      subspecialty: subspecialty || "",
+      chapter: chapter || "",
+      totalFlashcards: String(safeTotalFlashcards),
+      filteredFlashcards: String(filteredFlashcards || 0),
+    });
+
+    router.push(
+      `/flashcards/${flashcardId}/${chapterFlashcards[index]._id}?${query.toString()}`,
+    );
+  };
 
   return (
     <div className="w-full">
@@ -149,6 +167,13 @@ const FlashCardDetails = ({
             Study
           </span>
         </div>
+
+        <p className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-300">
+          {safeTotalFlashcards} flashcards in this chapter
+          {filteredFlashcards > 0 && filteredFlashcards !== safeTotalFlashcards
+            ? ` • ${filteredFlashcards} from filtered results`
+            : ""}
+        </p>
 
         {/* Main Content */}
         <div className="mt-8  max-w-3xl">
@@ -214,92 +239,93 @@ const FlashCardDetails = ({
               <div className="mt-6 flex flex-wrap justify-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setConfidenceRating("correct")}
+                  disabled={createReviewMutation.isPending}
+                  onClick={() => handleSubmitReview("correct")}
                   className={`flex-1 min-w-[100px] rounded-xl border-2 py-3 px-4 text-sm font-bold transition-all ${
                     confidenceRating === "correct"
                       ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400"
                       : "border-slate-100 bg-slate-50 text-slate-600 hover:border-emerald-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"
                   }`}
                 >
-                  Correct
+                  {createReviewMutation.isPending &&
+                  confidenceRating === "correct"
+                    ? "Saving..."
+                    : "Correct"}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setConfidenceRating("incorrect")}
+                  disabled={createReviewMutation.isPending}
+                  onClick={() => handleSubmitReview("incorrect")}
                   className={`flex-1 min-w-[100px] rounded-xl border-2 py-3 px-4 text-sm font-bold transition-all ${
                     confidenceRating === "incorrect"
                       ? "border-red-500 bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400"
                       : "border-slate-100 bg-slate-50 text-slate-600 hover:border-red-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"
                   }`}
                 >
-                  Wrong
+                  {createReviewMutation.isPending &&
+                  confidenceRating === "incorrect"
+                    ? "Saving..."
+                    : "Wrong"}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setConfidenceRating("unknown")}
+                  disabled={createReviewMutation.isPending}
+                  onClick={() => handleSubmitReview("unknown")}
                   className={`flex-1 min-w-[100px] rounded-xl border-2 py-3 px-4 text-sm font-bold transition-all ${
                     confidenceRating === "unknown"
                       ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400"
                       : "border-slate-100 bg-slate-50 text-slate-600 hover:border-blue-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"
                   }`}
                 >
-                  Unknown
+                  {createReviewMutation.isPending &&
+                  confidenceRating === "unknown"
+                    ? "Saving..."
+                    : "UnSure"}
                 </button>
               </div>
+            </div>
+          )}
 
-              <div className="mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-100 dark:border-slate-800">
-                <div className="grow text-center sm:text-left">
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">
-                    Repetitions
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    How many times have you seen this before?
-                  </p>
-                </div>
-                <div className="flex w-full flex-col sm:flex-row sm:items-end gap-3">
-                  <div className="w-full sm:min-w-[360px]">
-                    <div className="relative px-2 pt-2">
-                      <div className="absolute top-1/2 left-2 right-2 h-px -translate-y-1/2 bg-slate-300 dark:bg-slate-600" />
-                      <div className="relative flex items-center justify-between">
-                        {INTERVAL_OPTIONS.map((option) => {
-                          const isSelected = customInterval === option.value;
-                          return (
-                            <button
-                              key={option.value}
-                              type="button"
-                              title={option.label}
-                              onClick={() => setCustomInterval(option.value)}
-                              aria-label={`Set next check-in to ${option.label}`}
-                              className={`h-3 w-3 rounded-full border transition-all ${
-                                isSelected
-                                  ? "border-slate-700 bg-slate-700 shadow-sm dark:border-slate-200 dark:bg-slate-200"
-                                  : "border-slate-300 bg-white hover:border-slate-500 dark:border-slate-500 dark:bg-slate-800"
-                              }`}
-                            />
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <p className="mt-2 text-left sm:text-right text-xs text-slate-500 dark:text-slate-400">
-                      {customInterval
-                        ? `${INTERVAL_OPTIONS.find((o) => o.value === customInterval)?.label} until next check-in`
-                        : "Select next check-in time"}
-                    </p>
+          {/* Bottom progress flow */}
+          {chapterFlashcards.length > 0 && (
+            <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <div className="overflow-x-auto pb-1">
+                <div className="relative mx-1 min-w-max px-2 pt-2">
+                  <div className="absolute left-2 right-2 top-1/2 h-px -translate-y-1/2 bg-slate-300 dark:bg-slate-600" />
+                  <div className="relative flex items-center gap-2">
+                    {chapterFlashcards.map((card, index) => {
+                      const isCurrent = card._id === lastid;
+                      return (
+                        <button
+                          key={card._id}
+                          type="button"
+                          onClick={() => goToFlashcardByIndex(index)}
+                          aria-label={`Go to flashcard ${index + 1}`}
+                          title={`Flashcard ${index + 1}`}
+                          className={`relative -top-1 h-3 w-3 rounded-full border transition-all ${
+                            isCurrent
+                              ? "border-orange-700 bg-orange-700 shadow-sm dark:border-orange-400 dark:bg-orange-400"
+                              : "border-slate-300 bg-white hover:border-orange-400 dark:border-slate-500 dark:bg-slate-900"
+                          }`}
+                        />
+                      );
+                    })}
                   </div>
-                  <Button
-                    onClick={handleSubmitReview}
-                    disabled={
-                      !confidenceRating ||
-                      !customInterval ||
-                      createReviewMutation.isPending
-                    }
-                    className="bg-orange-700 hover:bg-orange-800 text-white font-bold"
-                  >
-                    {createReviewMutation.isPending
-                      ? "Saving..."
-                      : "Submit Review"}
-                  </Button>
                 </div>
+              </div>
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  {chapter} - Flashcard {currentStep} of {safeTotalFlashcards}
+                </p>
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  {filteredFlashcards > 0 &&
+                  filteredFlashcards !== safeTotalFlashcards
+                    ? `${filteredFlashcards} from filtered results`
+                    : `${safeTotalFlashcards} flashcards`}
+                </p>
+                {/* <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  {currentStep}/{safeTotalFlashcards}
+                </p> */}
               </div>
             </div>
           )}

@@ -3,11 +3,7 @@
 import React, { useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Search, SlidersHorizontal, X, ChevronDown } from "lucide-react";
-import {
-  useAllFlashcards,
-  useFlashcardProgress,
-  useFilteredFlashcards,
-} from "../hooks/useFlashCard";
+import { useAllFlashcards, useFilteredFlashcards } from "../hooks/useFlashCard";
 
 type InjuryData = {
   _id: string;
@@ -39,8 +35,8 @@ const STATUS_OPTIONS = [
 ];
 const SORT_OPTIONS = [
   { label: "Default", value: "" },
-  { label: "Newest", value: "desc" },
-  { label: "Oldest", value: "asc" },
+  { label: "Newest", value: "dessce" },
+  { label: "Oldest", value: "assend" },
 ];
 
 // ─── Tiny hook: debounce ──────────────────────────────────────────────────────
@@ -113,23 +109,22 @@ const SubFlashCard = ({
       ...(search && { search }),
     });
 
-  const { data: progressData } = useFlashcardProgress(flashcardId || "");
+  const allFlashcards: InjuryData[] =
+    (injuriesData?.data as InjuryData[]) || [];
+  const filteredFlashcards: InjuryData[] =
+    (filteredData?.data as InjuryData[]) || [];
 
   // Pick the right dataset
   const injuries: InjuryData[] = hasFilters
-    ? (filteredData?.data as InjuryData[]) || []
-    : (injuriesData?.data as InjuryData[]) || [];
+    ? filteredFlashcards
+    : allFlashcards;
   const isLoading = hasFilters ? filterLoading : baseLoading;
-
-  // ── Progress stats ────────────────────────────────────────────────────────
-  const summary = progressData?.data?.summary;
-  const total = summary?.totalFlashcards || injuries.length;
-  const correctCount = summary?.correct || 0;
-  const wrongCount = summary?.wrong || 0;
-  const correctPercent = total > 0 ? (correctCount / total) * 100 : 0;
-  const wrongPercent = total > 0 ? (wrongCount / total) * 100 : 0;
-  const totalCompletedPercent =
-    total > 0 ? ((correctCount + wrongCount) / total) * 100 : 0;
+  const totalFlashcards = allFlashcards.length;
+  const filteredFlashcardsCount = filteredFlashcards.length;
+  const resumeTargetId =
+    allFlashcards.find((i) => !i.userAnswer)?._id ||
+    allFlashcards[0]?._id ||
+    "";
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   const clearFilters = useCallback(() => {
@@ -172,54 +167,43 @@ const SubFlashCard = ({
           )}
         </div>
 
+        <p className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-300">
+          {totalFlashcards} flashcards in this chapter
+        </p>
+
         {/* ── Progress card ── */}
         <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-5 dark:border-slate-700 dark:bg-slate-800/60">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-            {subspecialtyTitle} Flashcards
+            {chapterTitle} Flashcards
           </h2>
 
           <p className="mt-3 text-sm font-medium text-slate-700 dark:text-slate-200">
-            Your Progress
+            Total: <span className="font-bold">{totalFlashcards}</span>{" "}
+            flashcards
           </p>
 
-          <div className="mt-2 h-3 w-full flex overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-            <div
-              className="h-full bg-emerald-500 transition-all duration-500"
-              style={{ width: `${correctPercent}%` }}
-              title={`Correct: ${correctCount}`}
-            />
-            <div
-              className="h-full bg-red-500 transition-all duration-500"
-              style={{ width: `${wrongPercent}%` }}
-              title={`Wrong: ${wrongCount}`}
-            />
-          </div>
-
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm">
-            <p className="text-slate-700 dark:text-slate-300">
-              <span className="font-semibold text-orange-700 dark:text-orange-400">
-                {Math.round(totalCompletedPercent)}% completed
-              </span>{" "}
-              of {total} questions
+          {hasFilters && (
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Showing {injuries.length} after filters
             </p>
-            <div className="flex gap-4">
-              <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                {correctCount} Correct
-              </span>
-              <span className="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-medium">
-                <span className="h-2 w-2 rounded-full bg-red-500" />
-                {wrongCount} Wrong
-              </span>
-            </div>
-          </div>
+          )}
 
-          <Link
-            href={`/flashcards/${flashcardId}/${injuries.find((i) => !i.userAnswer)?._id || injuries[0]?._id || ""}`}
-            className="mt-4 inline-block rounded-full bg-orange-700 px-6 py-2 text-sm font-semibold text-white transition hover:bg-orange-800"
-          >
-            Resume Flashback
-          </Link>
+          {resumeTargetId && (
+            <Link
+              href={{
+                pathname: `/flashcards/${flashcardId}/${resumeTargetId}`,
+                query: {
+                  subspecialty: subspecialtyTitle,
+                  chapter: chapterTitle,
+                  totalFlashcards: String(totalFlashcards),
+                  filteredFlashcards: String(filteredFlashcardsCount),
+                },
+              }}
+              className="mt-4 inline-block rounded-full bg-orange-700 px-6 py-2 text-sm font-semibold text-white transition hover:bg-orange-800"
+            >
+              Resume Flashback
+            </Link>
+          )}
         </div>
 
         {/* ─────────────────────────────────────────────────────────────────── */}
@@ -461,6 +445,14 @@ const SubFlashCard = ({
                         <Link
                           href={{
                             pathname: `/flashcards/${flashcardId}/${injury._id}`,
+                            query: {
+                              subspecialty: subspecialtyTitle,
+                              chapter: chapterTitle,
+                              totalFlashcards: String(totalFlashcards),
+                              filteredFlashcards: String(
+                                filteredFlashcardsCount,
+                              ),
+                            },
                           }}
                           className="mt-1 inline-block text-sm font-semibold text-orange-700 transition hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300"
                         >
