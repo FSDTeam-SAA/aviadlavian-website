@@ -32,12 +32,13 @@ const AnnotationCounts = ({ articleId }: { articleId: string }) => {
     <div className="flex items-center gap-2">
       {notesCount > 0 && (
         <span className="flex items-center gap-1 text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 font-bold">
-          <Edit3 size={10} /> {notesCount}
+          <Edit3 size={10} /> {notesCount} {notesCount === 1 ? "note" : "notes"}
         </span>
       )}
       {highlightsCount > 0 && (
         <span className="flex items-center gap-1 text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-500 font-bold">
-          <PencilLine size={10} /> {highlightsCount}
+          <PencilLine size={10} /> {highlightsCount}{" "}
+          {highlightsCount === 1 ? "highlight" : "highlights"}
         </span>
       )}
     </div>
@@ -45,6 +46,11 @@ const AnnotationCounts = ({ articleId }: { articleId: string }) => {
 };
 
 const Library = () => {
+  // TODO: Future enhancement:
+  // - Add dedicated Library pages for Notes and Highlights.
+  // - Replace temporary "/learningplan" links in the cards below
+  //   with the final routes (example: "/library/notes" and "/library/highlights").
+  // - Add API hooks to fetch paginated notes/highlights and support search/filter.
   const [searchQuery, setSearchQuery] = React.useState("");
   const [debouncedSearch, setDebouncedSearch] = React.useState("");
   const [activeFilters, setActiveFilters] = React.useState<LibraryFilters>({});
@@ -430,56 +436,61 @@ const Library = () => {
         )}
       </div>
 
-      {/* Text Notes and Highlights Section */}
-      <div className="mt-16">
-        <h2 className="mb-6 text-2xl font-bold text-slate-900 dark:text-white">
-          Text Notes and Highlights:
-        </h2>
+      {false && (
+        <div className="mt-16">
+          {/* Text Notes and Highlights Section */}
+          {/* TODO: Move this section into reusable feature components when Notes/Highlights pages are implemented. */}
+          <h2 className="mb-6 text-2xl font-bold text-slate-900 dark:text-white">
+            Text Notes and Highlights:
+          </h2>
 
-        <div className="grid gap-6 sm:grid-cols-2">
-          {/* Notes Card */}
-          <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-8 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
-            <div className="mb-4 flex items-center justify-center lg:justify-start gap-3">
-              <Edit3 size={28} className="text-slate-900 dark:text-white" />
-              <h3 className="text-3xl font-bold text-slate-900 dark:text-white">
-                Notes
-              </h3>
+          <div className="grid gap-6 sm:grid-cols-2">
+            {/* Notes Card */}
+            <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-8 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
+              <div className="mb-4 flex items-center justify-center gap-3 lg:justify-start">
+                <Edit3 size={28} className="text-slate-900 dark:text-white" />
+                <h3 className="text-3xl font-bold text-slate-900 dark:text-white">
+                  Notes
+                </h3>
+              </div>
+              <p className="mb-8 text-center text-sm font-medium text-slate-600 dark:text-slate-400 lg:text-left">
+                Your notes, organized by content type and subspecialty
+              </p>
+              {/* TODO: Temporary destination. Update to dedicated Notes page when available. */}
+              <Link
+                href="/learningplan"
+                className="mt-auto flex h-12 items-center justify-center rounded-xl bg-[#007b5e] font-bold text-white transition hover:bg-[#00634b]"
+              >
+                View in Learning Plan
+              </Link>
             </div>
-            <p className="mb-8 text-center lg:text-left text-sm font-medium text-slate-600 dark:text-slate-400">
-              Your notes, organized by content type and subspecialty
-            </p>
-            <Link
-              href="/learningplan"
-              className="mt-auto flex h-12 items-center justify-center rounded-xl bg-[#007b5e] font-bold text-white transition hover:bg-[#00634b]"
-            >
-              View in Learning Plan
-            </Link>
-          </div>
 
-          {/* Highlights Card */}
-          <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-8 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
-            <div className="mb-4 flex items-center justify-center lg:justify-start gap-3">
-              <PencilLine
-                size={28}
-                className="text-slate-900 dark:text-white"
-              />
-              <h3 className="text-3xl font-bold text-slate-900 dark:text-white">
-                Highlights
-              </h3>
+            {/* Highlights Card */}
+            <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-8 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
+              <div className="mb-4 flex items-center justify-center gap-3 lg:justify-start">
+                <PencilLine
+                  size={28}
+                  className="text-slate-900 dark:text-white"
+                />
+                <h3 className="text-3xl font-bold text-slate-900 dark:text-white">
+                  Highlights
+                </h3>
+              </div>
+              <p className="mb-8 text-center text-sm font-medium text-slate-600 dark:text-slate-400 lg:text-left">
+                Content you&apos;ve highlighted, organized by type and
+                subspecialty
+              </p>
+              {/* TODO: Temporary destination. Update to dedicated Highlights page when available. */}
+              <Link
+                href="/learningplan"
+                className="mt-auto flex h-12 items-center justify-center rounded-xl bg-[#007b5e] font-bold text-white transition hover:bg-[#00634b]"
+              >
+                View in Learning Plan
+              </Link>
             </div>
-            <p className="mb-8 text-center lg:text-left text-sm font-medium text-slate-600 dark:text-slate-400">
-              Content you&apos;ve highlighted, organized by type and
-              subspecialty
-            </p>
-            <Link
-              href="/learningplan"
-              className="mt-auto flex h-12 items-center justify-center rounded-xl bg-[#007b5e] font-bold text-white transition hover:bg-[#00634b]"
-            >
-              View in Learning Plan
-            </Link>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

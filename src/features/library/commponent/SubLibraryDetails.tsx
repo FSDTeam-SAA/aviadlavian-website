@@ -3,7 +3,14 @@
 import React, { useMemo, useState, useRef } from "react";
 import { nanoid } from "nanoid";
 import Link from "next/link";
-import { BookOpen, ClipboardList, PencilLine, Edit3, X } from "lucide-react";
+import {
+  BookOpen,
+  ClipboardList,
+  PencilLine,
+  Edit3,
+  X,
+  ChevronRight,
+} from "lucide-react";
 import Notes from "./Notes";
 import NotesPanel from "./common/NotesPanel";
 import LearningPlanPanel from "./common/LearningPlanPanel";
@@ -118,6 +125,14 @@ const SubLibraryDetails = ({
     setNewNote("");
     setSelectedSection("");
     setShowNotesPanel(false);
+  };
+
+  const openNotesDetails = () => {
+    setShowTOC(false);
+    setShowLearningPlan(false);
+    setShowNotesPanel(false);
+    setFloatingMenu(null);
+    setShowNotesPage(true);
   };
 
   const getSelectionOffsets = (selection: Selection) => {
@@ -507,51 +522,46 @@ const SubLibraryDetails = ({
       </div>
 
       <div className="mt-12">
-        <h2 className="mb-6 text-2xl font-bold text-slate-900 dark:text-white">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900 dark:text-white">
           Text Notes and Highlights:
         </h2>
 
-        <div className="grid gap-6 sm:grid-cols-2">
-          <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-8 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
-            <div className="mb-4 flex items-center justify-center lg:justify-start gap-3">
-              <Edit3 size={28} className="text-slate-900 dark:text-white" />
-              <h3 className="text-3xl font-bold text-slate-900 dark:text-white">
-                Notes
-              </h3>
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <button
+            type="button"
+            onClick={openNotesDetails}
+            className="flex w-full items-center justify-between border-b border-slate-200 px-4 py-3 text-left transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/40"
+          >
+            <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100">
+              <Edit3 size={15} />
+              <span className="text-sm font-medium">Notes</span>
             </div>
-            <p className="mb-8 text-center lg:text-left text-sm font-medium text-slate-600 dark:text-slate-400">
-              Your notes, organized by content type and subspecialty
-            </p>
-            <button
-              onClick={() => setShowNotesPage(true)}
-              className="mt-auto flex h-12 items-center justify-center rounded-xl bg-[#007b5e] font-bold text-white transition hover:bg-[#00634b]"
-            >
-              {notes.length} Notes
-            </button>
-          </div>
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+              <span className="text-xs font-medium">{notes.length} Notes</span>
+              <ChevronRight size={14} className="text-slate-400" />
+            </div>
+          </button>
 
-          <div className="flex flex-col rounded-3xl border border-slate-200 bg-white p-8 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
-            <div className="mb-4 flex items-center justify-center lg:justify-start gap-3">
-              <PencilLine
-                size={28}
-                className="text-slate-900 dark:text-white"
-              />
-              <h3 className="text-3xl font-bold text-slate-900 dark:text-white">
-                Highlights
-              </h3>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/40"
+          >
+            <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100">
+              <PencilLine size={15} />
+              <span className="text-sm font-medium">Highlights</span>
             </div>
-            <p className="mb-8 text-center lg:text-left text-sm font-medium text-slate-600 dark:text-slate-400">
-              Content you&apos;ve highlighted, organized by type and
-              subspecialty
-            </p>
-            <button className="mt-auto flex h-12 items-center justify-center rounded-xl bg-[#007b5e] font-bold text-white transition hover:bg-[#00634b]">
-              {
-                highlights.filter((h) => article?.description?.includes(h.text))
-                  .length
-              }{" "}
-              Highlights
-            </button>
-          </div>
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+              <span className="text-xs font-medium">
+                {
+                  highlights.filter((h) =>
+                    article?.description?.includes(h.text),
+                  ).length
+                }{" "}
+                Highlights
+              </span>
+              <ChevronRight size={14} className="text-slate-400" />
+            </div>
+          </button>
         </div>
       </div>
     </div>

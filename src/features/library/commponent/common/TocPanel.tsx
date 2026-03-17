@@ -227,7 +227,7 @@ const TocPanel = ({ chapters, onToggleBookmark, onClose }: TocPanelProps) => {
   }, [libraryData?.data, currentChapterId]);
 
   return (
-    <div className="flex flex-col h-full max-h-[600px] overflow-hidden bg-white dark:bg-slate-900 font-manrope">
+    <div className="flex flex-col h-full max-h-[600px]  overflow-hidden bg-white dark:bg-slate-900 font-manrope">
       {/* Header Section */}
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 p-5 shrink-0">
         <div className="flex items-center gap-2.5">
