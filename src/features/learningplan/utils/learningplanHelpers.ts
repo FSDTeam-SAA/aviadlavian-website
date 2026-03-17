@@ -45,7 +45,13 @@ export function extractTopics(plans: LearningPlan[]): Topic[] {
 
     // From quizzes
     for (const q of plan.quizzes || []) {
+      const topicId = q.quizId?.topicId;
       const topicIds = q.quizId?.topicIds;
+
+      if (topicId && typeof topicId === "object" && (topicId as Topic)._id) {
+        topicMap.set((topicId as Topic)._id, topicId as Topic);
+      }
+
       if (Array.isArray(topicIds)) {
         for (const topic of topicIds) {
           if (topic?._id) {
@@ -131,11 +137,21 @@ export function getTopicProgress(
     let mcqTotal = 0;
     for (const plan of plans) {
       for (const q of plan.quizzes || []) {
-        const topicIds = q.quizId?.topicIds;
-        if (
-          Array.isArray(topicIds) &&
-          topicIds.some((t) => t._id === topic._id)
-        ) {
+        const quizTopicId = q.quizId?.topicId;
+        const quizTopicIds = q.quizId?.topicIds;
+
+        // Check if topic matches by ID, singular topicId, or in topicIds array
+        const isMatch =
+          (typeof quizTopicId === "string" &&
+            (quizTopicId === topic._id ||
+              quizTopicId === topic.Primary_Body_Region)) ||
+          (quizTopicId &&
+            typeof quizTopicId === "object" &&
+            (quizTopicId as Topic)._id === topic._id) ||
+          (Array.isArray(quizTopicIds) &&
+            quizTopicIds.some((t) => t._id === topic._id));
+
+        if (isMatch) {
           mcqTotal++;
           if (
             (q.quizId.totalAttempts || 0) > 0 ||
@@ -223,10 +239,26 @@ export function groupArticlesBySecondaryRegion(
 // ── Get quizzes for a specific topic ──
 export function getTopicQuizzes(plans: LearningPlan[], topicId: string) {
   const quizzes: PopulatedQuiz[] = [];
+  const topics = extractTopics(plans);
+  const targetTopic = topics.find((t) => t._id === topicId);
+
   for (const plan of plans) {
     for (const q of plan.quizzes || []) {
-      const topicIds = q.quizId?.topicIds;
-      if (Array.isArray(topicIds) && topicIds.some((t) => t._id === topicId)) {
+      const quizTopicId = q.quizId?.topicId;
+      const quizTopicIds = q.quizId?.topicIds;
+
+      const isMatch =
+        (typeof quizTopicId === "string" &&
+          (quizTopicId === topicId ||
+            (targetTopic &&
+              quizTopicId === targetTopic.Primary_Body_Region))) ||
+        (quizTopicId &&
+          typeof quizTopicId === "object" &&
+          (quizTopicId as Topic)._id === topicId) ||
+        (Array.isArray(quizTopicIds) &&
+          quizTopicIds.some((t) => t._id === topicId));
+
+      if (isMatch) {
         quizzes.push({ ...q, planId: plan._id });
       }
     }

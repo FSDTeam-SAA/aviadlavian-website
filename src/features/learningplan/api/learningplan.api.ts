@@ -11,9 +11,12 @@ export async function createLearningPlan(): Promise<BaseResponse> {
   return res.data;
 }
 
-export async function getLearningPlans(): Promise<GetAllLearningPlansResponse> {
+export async function getLearningPlans(
+  search?: string,
+): Promise<GetAllLearningPlansResponse> {
+  const params = search ? `?search=${encodeURIComponent(search)}` : "";
   const res = await api.get<GetAllLearningPlansResponse>(
-    "/learning-plan/get-all?limit=500",
+    `/learning-plan/get-all${params}`,
   );
   return res.data;
 }

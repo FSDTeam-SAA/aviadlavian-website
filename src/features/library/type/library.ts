@@ -1,6 +1,7 @@
 export type LibraryQueryParams = {
   page?: number;
   limit?: number;
+  search?: string;
 };
 
 export type LibraryImage = {

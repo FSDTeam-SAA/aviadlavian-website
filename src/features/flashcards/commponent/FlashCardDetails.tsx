@@ -7,9 +7,11 @@ import {
   useInjuryFlashcardId,
   useAllFlashcards,
   useCreateFlashcardReview,
+  useFilteredFlashcards,
 } from "../hooks/useFlashCard";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   useLearningPlans,
   useAddFlashcardToLearningPlan,
@@ -22,6 +24,11 @@ type FlashCardDetailsProps = {
   flashcardId?: string;
   totalFlashcards?: number;
   filteredFlashcards?: number;
+  status?: string;
+  acuity?: string;
+  ageGroup?: string;
+  sortBy?: string;
+  search?: string;
 };
 
 const FlashCardDetails = ({
@@ -31,17 +38,44 @@ const FlashCardDetails = ({
   flashcardId,
   totalFlashcards = 0,
   filteredFlashcards = 0,
+  status,
+  acuity,
+  ageGroup,
+  sortBy,
+  search,
 }: FlashCardDetailsProps) => {
   const router = useRouter();
   const [isAnswerRevealed, setIsAnswerRevealed] = useState(false);
   const [confidenceRating, setConfidenceRating] = useState<string | null>(null);
 
   const { data: flashdata } = useInjuryFlashcardId(lastid || "");
-  const { data: flashcardsByTopic } = useAllFlashcards(flashcardId || "");
+
+  // Use filtered flashcards if any filter is active, otherwise use all flashcards for topic
+  const hasStudyFilters = !!(status || acuity || ageGroup || sortBy || search);
+
+  const { data: flashcardsByTopic } = useAllFlashcards(
+    !hasStudyFilters ? flashcardId || "" : "",
+  );
+
+  const { data: filteredStudyData } = useFilteredFlashcards({
+    page: 1,
+    limit: 1000,
+    status,
+    filterBytopicId: flashcardId,
+    filterByAcuity: acuity,
+    filterByAgeGroup: ageGroup,
+    sortBy,
+    search,
+  });
+
   const createReviewMutation = useCreateFlashcardReview();
 
   const chapterFlashcards =
-    (flashcardsByTopic?.data as Array<{ _id: string }>) || [];
+    ((hasStudyFilters
+      ? filteredStudyData?.data
+      : flashcardsByTopic?.data) as Array<{
+      _id: string;
+    }>) || [];
   const safeTotalFlashcards = totalFlashcards || chapterFlashcards.length;
   const currentIndex = chapterFlashcards.findIndex(
     (card) => card._id === lastid,
@@ -122,6 +156,11 @@ const FlashCardDetails = ({
       chapter: chapter || "",
       totalFlashcards: String(safeTotalFlashcards),
       filteredFlashcards: String(filteredFlashcards || 0),
+      status: status || "",
+      acuity: acuity || "",
+      ageGroup: ageGroup || "",
+      sortBy: sortBy || "",
+      search: search || "",
     });
 
     router.push(
@@ -138,7 +177,18 @@ const FlashCardDetails = ({
             Flashcards
           </h1>
           <Link
-            href={`/flashcards/${flashcardId || ""}`}
+            href={{
+              pathname: `/flashcards/${flashcardId || ""}`,
+              query: {
+                subspecialty,
+                chapter,
+                status,
+                acuity,
+                ageGroup,
+                sortBy,
+                search,
+              },
+            }}
             className="w-fit rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
           >
             Back to List
@@ -313,19 +363,36 @@ const FlashCardDetails = ({
                   </div>
                 </div>
               </div>
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  {chapter} - Flashcard {currentStep} of {safeTotalFlashcards}
-                </p>
+              <div className="mb-2 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => goToFlashcardByIndex(currentIndex - 1)}
+                    disabled={currentIndex <= 0}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-30 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
+                    title="Previous Flashcard"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    {chapter} - Flashcard {currentStep} of {safeTotalFlashcards}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => goToFlashcardByIndex(currentIndex + 1)}
+                    disabled={currentIndex >= chapterFlashcards.length - 1}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-30 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
+                    title="Next Flashcard"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
                 <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                   {filteredFlashcards > 0 &&
                   filteredFlashcards !== safeTotalFlashcards
                     ? `${filteredFlashcards} from filtered results`
                     : `${safeTotalFlashcards} flashcards`}
                 </p>
-                {/* <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                  {currentStep}/{safeTotalFlashcards}
-                </p> */}
               </div>
             </div>
           )}

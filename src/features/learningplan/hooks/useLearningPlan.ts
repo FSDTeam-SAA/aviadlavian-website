@@ -9,16 +9,17 @@ import {
   getArticleAnnotations,
 } from "../api/learningplan.api";
 
-export function useLearningPlan() {
+export function useLearningPlan(search?: string) {
   return useQuery({
-    queryKey: ["learning-plan"],
+    queryKey: ["learning-plan", search ?? ""],
     queryFn: async () => {
-      const plansRes = await getLearningPlans();
-      if (plansRes.data && plansRes.data.length > 0) {
-        return plansRes;
+      const plansRes = await getLearningPlans(search);
+      // Only auto-create when there is no search term and no plans exist yet
+      if (!search && (!plansRes.data || plansRes.data.length === 0)) {
+        await createLearningPlan();
+        return await getLearningPlans();
       }
-      await createLearningPlan();
-      return await getLearningPlans();
+      return plansRes;
     },
   });
 }

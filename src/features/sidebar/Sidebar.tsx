@@ -39,13 +39,13 @@ type MenuItem = {
 const menuItems: MenuItem[] = [
   { label: "Home", icon: Home, url: "/" },
   { label: "Library", icon: Library, url: "/library" },
-  { label: "About", icon: Info, url: "/about" },
   { label: "Question Bank", icon: SquareKanban, url: "/questionbank" },
   { label: "Learning Plan", icon: FileText, url: "/learningplan" },
   { label: "Flashcards", icon: Sparkles, url: "/flashcards" },
   { label: "Custom Quizzes", icon: BookText, url: "/custom-quizzes" },
   { label: "Settings", icon: Settings, url: "/settings" },
   { label: "Feedback", icon: MessageSquare, url: "/feedback" },
+  { label: "About", icon: Info, url: "/about" },
 ];
 
 const Sidebar = () => {

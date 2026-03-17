@@ -197,6 +197,11 @@ const SubFlashCard = ({
                   chapter: chapterTitle,
                   totalFlashcards: String(totalFlashcards),
                   filteredFlashcards: String(filteredFlashcardsCount),
+                  status,
+                  acuity,
+                  ageGroup,
+                  sortBy,
+                  search,
                 },
               }}
               className="mt-4 inline-block rounded-full bg-orange-700 px-6 py-2 text-sm font-semibold text-white transition hover:bg-orange-800"
@@ -452,6 +457,11 @@ const SubFlashCard = ({
                               filteredFlashcards: String(
                                 filteredFlashcardsCount,
                               ),
+                              status,
+                              acuity,
+                              ageGroup,
+                              sortBy,
+                              search,
                             },
                           }}
                           className="mt-1 inline-block text-sm font-semibold text-orange-700 transition hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300"

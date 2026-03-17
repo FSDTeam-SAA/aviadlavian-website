@@ -198,9 +198,10 @@ const MCQStatsModal: React.FC<MCQStatsModalProps> = ({
                     <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#0077A3] text-white flex items-center justify-center text-xs font-bold mt-0.5">
                       {q.serialNumber}
                     </div>
-                    <p className="font-medium text-slate-800 dark:text-slate-200 leading-snug">
-                      {q.questionText}
-                    </p>
+                    <div
+                      className="font-medium text-slate-800 dark:text-slate-200 leading-snug prose prose-sm dark:prose-invert max-w-none"
+                      dangerouslySetInnerHTML={{ __html: q.questionText }}
+                    />
                   </div>
 
                   <div className="space-y-2 ml-9 mb-4">
@@ -228,9 +229,10 @@ const MCQStatsModal: React.FC<MCQStatsModalProps> = ({
                       <p className="text-xs font-semibold text-blue-800 dark:text-blue-400 mb-1 uppercase tracking-wider">
                         Explanation
                       </p>
-                      <p className="text-sm text-blue-900 dark:text-blue-300">
-                        {q.explanation}
-                      </p>
+                      <div
+                        className="text-sm text-blue-900 dark:text-blue-300 prose prose-sm dark:prose-invert max-w-none"
+                        dangerouslySetInnerHTML={{ __html: q.explanation }}
+                      />
                     </div>
                   )}
                 </div>

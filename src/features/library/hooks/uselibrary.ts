@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   getAllLibraryArticles,
   getArticleAnnotations,
@@ -19,8 +24,14 @@ import { LibraryQueryParams } from "../type/library";
 
 export function useLibrary(params: LibraryQueryParams = {}) {
   return useQuery({
-    queryKey: ["library-articles", params.page ?? 1, params.limit ?? 10],
+    queryKey: [
+      "library-articles",
+      params.page ?? 1,
+      params.limit ?? 10,
+      params.search ?? "",
+    ],
     queryFn: () => getAllLibraryArticles(params),
+    placeholderData: keepPreviousData,
   });
 }
 

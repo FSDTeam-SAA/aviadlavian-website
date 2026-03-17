@@ -1,14 +1,27 @@
 // src/features/learningplan/component/MainLearning.tsx
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Search } from "lucide-react";
 import { useLearningPlan } from "../hooks/useLearningPlan";
 import { groupByBodyRegion } from "../utils/learningplanHelpers";
 
+function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState<T>(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(id);
+  }, [value, delay]);
+  return debounced;
+}
+
 const MainLearning = () => {
   const router = useRouter();
-  const { data, isLoading, error } = useLearningPlan();
+  const [searchRaw, setSearchRaw] = useState("");
+  const search = useDebounce(searchRaw, 400);
+
+  const { data, isLoading, error } = useLearningPlan(search);
 
   const bodyRegions = React.useMemo(() => {
     if (!data?.data) return [];
@@ -66,17 +79,30 @@ const MainLearning = () => {
       <div className="bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
         <div>
           {/* Header */}
-          <h1 className="mb-8 text-3xl font-bold text-slate-900 dark:text-slate-100">
+          <h1 className="mb-6 text-3xl font-bold text-slate-900 dark:text-slate-100">
             Learning Plan
           </h1>
+
+          {/* Search */}
+          <div className="relative mb-8 max-w-md">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchRaw}
+              onChange={(e) => setSearchRaw(e.target.value)}
+              placeholder="Search learning plans…"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-800 placeholder-slate-400 outline-none transition focus:border-[#0077A3] focus:ring-2 focus:ring-[#0077A3]/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+            />
+          </div>
 
           {/* Learning Plans Grid */}
           <div className="max-w-7xl">
             {bodyRegions.length === 0 ? (
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-8 text-center dark:border-slate-700 dark:bg-slate-800">
                 <p className="text-slate-500 dark:text-slate-400">
-                  No learning plans found. Start studying to see your plans
-                  here.
+                  {search
+                    ? `No learning plans found for "${search}".`
+                    : "No learning plans found. Start studying to see your plans here."}
                 </p>
               </div>
             ) : (

@@ -72,6 +72,7 @@ const ArticleCountFetcher = ({
   type: "notes" | "highlights";
 }) => {
   const { data } = useAnnotations(articleId);
+  console.log("arti", data);
   const count =
     type === "notes"
       ? data?.data?.notes?.length || 0
