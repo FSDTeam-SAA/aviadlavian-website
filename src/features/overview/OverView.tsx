@@ -156,7 +156,7 @@ const OverView = () => {
             Notes &amp; Highlights
           </h3>
           <div className="mt-3 grid grid-cols-1 gap-4 xl:grid-cols-2">
-            <Link href="/library">
+            <Link href="/learningplan">
               <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900 cursor-pointer h-full">
                 <div className="flex items-center gap-3 text-slate-900 dark:text-slate-100">
                   <BookText size={24} />
@@ -171,7 +171,7 @@ const OverView = () => {
               </article>
             </Link>
 
-            <Link href="/library">
+            <Link href="/learningplan">
               <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900 cursor-pointer h-full">
                 <div className="flex items-center gap-3 text-slate-900 dark:text-slate-100">
                   <Highlighter size={24} />
